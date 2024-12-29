@@ -15,9 +15,10 @@ import ProfileBox from './src/components/ProfileBox'; // Import the ProfileBox c
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountName, setAccountName] = useState('Not Logged In Yet');
+  const [accountName, setAccountName] = useState('Guest');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [profiles, setProfiles] = useState([]); // Declare state for profiles
+  
 
   // PlaceHolder for login
   const handleLogin = () => {
@@ -102,35 +103,40 @@ const App = () => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-    <View style={styles.container}>
-
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={isLoggedIn ? handleLogout : handleLogin}>
-            <Text style={styles.headerText}>
-              {isLoggedIn ? 'Logout' : 'Login'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerText}>{accountName}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity onPress={handleFileDrop}>
-            <Text style={styles.headerText}>Attach/Drop Files</Text>
-          </TouchableOpacity>
+      <View style={styles.container}>
+  
+        {/* Dynamic Profile Boxes */}
+        <ScrollView style={styles.profilesContainer}>
+          <View style={styles.gridContainer}>
+            {profiles.map((profile, index) => (
+              <View key={index} style={styles.profileWrapper}>
+                <ProfileBox name={profile} />
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+  
+        {/* Footer */}
+        <View style={styles.footer}>
+          <View style={styles.footerLeft}>
+            <TouchableOpacity onPress={isLoggedIn ? handleLogout : handleLogin}>
+              <Text style={styles.footerText}>
+                {isLoggedIn ? 'Logout' : 'Login'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.footerCenter}>
+            <Text style={styles.footerText}>{accountName}</Text>
+          </View>
+          <View style={styles.footerRight}>
+            <TouchableOpacity onPress={handleFileDrop}>
+              <Text style={styles.footerText}>Attach/Drop Files</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-
-    {/* Dynamic Profile Boxes */}
-    <ScrollView style={styles.profilesContainer}>
-          {profiles.map((profile, index) => (
-            <ProfileBox key={index} name={profile} />
-          ))}
-    </ScrollView>
-
-    </View>
     </SafeAreaView>
+  
   );
 };
 
@@ -138,21 +144,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  profilesContainer: {
+    paddingHorizontal: 10,
+    flex: 1,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  profileWrapper: {
+    width: '48%',
+  },
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#f0f0f0', 
+    backgroundColor: '#f0f0f0',
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
   },
-  headerLeft: {},
-  headerCenter: {},
-  headerRight: {},
-  headerText: {
+  footerLeft: {},
+  footerCenter: {},
+  footerRight: {},
+  footerText: {
+    paddingBottom: 0,
     fontWeight: 'bold',
-  },
-  profilesContainer: {
-    padding: 20,
   },
 });
 
