@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   iconsContainer: {
     flexDirection: 'column',
     justifyContent: 'space-around', // Spreads out icons vertically,
-    
+
   },
   icon: {
     width: 24,

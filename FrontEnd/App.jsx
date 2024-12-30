@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { 
   View, 
@@ -7,18 +7,44 @@ import {
   TouchableOpacity, 
   Alert, 
   ScrollView,
+  Animated,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import { SafeAreaView } from 'react-native';
 import RNFS from 'react-native-fs';
-import ProfileBox from './src/components/ProfileBox'; // Import the ProfileBox component
+import ProfileBox from './src/components/ProfileBox';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accountName, setAccountName] = useState('Guest');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [profiles, setProfiles] = useState([]); // Declare state for profiles
-  
+  const [navbarHeight, setNavbarHeight] = useState(0);
+
+  const scrollAnim = new Animated.Value(0); // HOlds curr scrollY position
+  const offsetAnim = new Animated.Value(0);
+
+  const clampedScroll = useRef(
+        scrollAnim.interpolate({
+          inputRange: [0, 450],
+          outputRange: [0, 450],
+          extrapolateLeft: 'clamp',
+        }),
+  ).current;
+
+  console.log('clampedScroll:', clampedScroll);
+
+  const footerTranslate = clampedScroll.interpolate({
+    inputRange: [0, navbarHeight], // From fully visible to hidden
+    outputRange: [0, -navbarHeight], // Translate down by the navbar height
+    extrapolate: 'clamp', // Prevent values outside the range
+  });
+
+  const footerOpacity = clampedScroll.interpolate({
+    inputRange: [0, navbarHeight], // Same range as translation
+    outputRange: [1, 0], // Fully visible to fully transparent
+    extrapolate: 'clamp',
+  });
 
   // PlaceHolder for login
   const handleLogin = () => {
@@ -101,12 +127,33 @@ const App = () => {
     }
   };
 
+  const cusotmfunc = (height) => {
+    console.log("NAVINAVIIIIIII:", navbarHeight);
+    console.log("Height:", height);
+    setNavbarHeight(height);
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
   
         {/* Dynamic Profile Boxes */}
-        <ScrollView style={styles.profilesContainer}>
+        <Animated.ScrollView
+          style={styles.profilesContainer}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollAnim } } }], // Update scrollAnim
+            {
+              useNativeDriver: true,
+              listener: (event) => {
+                const scrollY = event.nativeEvent.contentOffset.y;
+                console.log('Scroll Y:', scrollY, scrollAnim, clampedScroll);
+                console.log("FooterTranslate:", footerTranslate);
+                console.log("FooterOpacity:", footerOpacity);
+              },
+            }
+          )}
+          scrollEventThrottle={16}
+        >
           <View style={styles.gridContainer}>
             {profiles.map((profile, index) => (
               <View key={index} style={styles.profileWrapper}>
@@ -114,10 +161,22 @@ const App = () => {
               </View>
             ))}
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
   
         {/* Footer */}
-        <View style={styles.footer}>
+        <Animated.View
+          style={[
+            styles.footer,
+            {
+              transform: [{ translateY: footerTranslate }], // Slide up/down
+              opacity: footerOpacity, // Fade in/out
+            },
+          ]}
+          onLayout={(event) => {
+            const { height } = event.nativeEvent.layout;
+            cusotmfunc(height);
+          }}
+        >
           <View style={styles.footerLeft}>
             <TouchableOpacity onPress={isLoggedIn ? handleLogout : handleLogin}>
               <Text style={styles.footerText}>
@@ -133,7 +192,7 @@ const App = () => {
               <Text style={styles.footerText}>Attach/Drop Files</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </SafeAreaView>
   
