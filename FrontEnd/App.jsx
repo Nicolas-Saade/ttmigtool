@@ -24,13 +24,11 @@ const App = () => {
   const scrollAnim = new Animated.Value(0); // HOlds curr scrollY position
   const offsetAnim = new Animated.Value(0);
 
-  const clampedScroll = useRef(
-        scrollAnim.interpolate({
-          inputRange: [0, 450],
-          outputRange: [0, 450],
-          extrapolateLeft: 'clamp',
-        }),
-  ).current;
+  const clampedScroll = Animated.diffClamp(
+    Animated.add(scrollAnim, offsetAnim),
+    0,
+    navbarHeight
+  );
 
   console.log('clampedScroll:', clampedScroll);
 
