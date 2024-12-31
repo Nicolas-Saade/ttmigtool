@@ -6,7 +6,6 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   Alert, 
-  ScrollView,
   Animated,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
@@ -17,30 +16,27 @@ import ProfileBox from './src/components/ProfileBox';
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accountName, setAccountName] = useState('Guest');
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [profiles, setProfiles] = useState([]); // Declare state for profiles
+  const [profiles, setProfiles] = useState([]);
   const [navbarHeight, setNavbarHeight] = useState(0);
 
-  const scrollAnim = new Animated.Value(0); // HOlds curr scrollY position
-  const offsetAnim = new Animated.Value(0);
+  const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
+  const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
 
-  const clampedScroll = Animated.diffClamp(
+  const clampedScroll = Animated.diffClamp( // Value used for footer translation and opacity interpolation
     Animated.add(scrollAnim, offsetAnim),
     0,
     navbarHeight
   );
 
-  console.log('clampedScroll:', clampedScroll);
-
   const footerTranslate = clampedScroll.interpolate({
-    inputRange: [0, navbarHeight], // From fully visible to hidden
-    outputRange: [0, -navbarHeight], // Translate down by the navbar height
-    extrapolate: 'clamp', // Prevent values outside the range
+    inputRange: [0, navbarHeight], // UpperBounded by diffClamp
+    outputRange: [0, -navbarHeight], // Move footer up by its height (hide it)
+    extrapolate: 'clamp', // Disables extrapolation (limits the interpolation output)
   });
 
   const footerOpacity = clampedScroll.interpolate({
-    inputRange: [0, navbarHeight], // Same range as translation
-    outputRange: [1, 0], // Fully visible to fully transparent
+    inputRange: [0, navbarHeight],
+    outputRange: [1, 0], // 1:Opaque-2:Transparent
     extrapolate: 'clamp',
   });
 
@@ -50,19 +46,11 @@ const App = () => {
     setAccountName('Nicolas Saade');
   };
 
-  // PlaceHolder for logout
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setAccountName('Guest');
-    setSelectedFiles([]);
-  };
-
   const handleFileSelect = async () => {
     try {
       const results = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles], // TODO check what do with input validation
       });
-      setSelectedFiles(results);
       return results[0];
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
@@ -125,12 +113,6 @@ const App = () => {
     }
   };
 
-  const cusotmfunc = (height) => {
-    console.log("NAVINAVIIIIIII:", navbarHeight);
-    console.log("Height:", height);
-    setNavbarHeight(height);
-  }
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -138,17 +120,9 @@ const App = () => {
         {/* Dynamic Profile Boxes */}
         <Animated.ScrollView
           style={styles.profilesContainer}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollAnim } } }], // Update scrollAnim
-            {
-              useNativeDriver: true,
-              listener: (event) => {
-                const scrollY = event.nativeEvent.contentOffset.y;
-                console.log('Scroll Y:', scrollY, scrollAnim, clampedScroll);
-                console.log("FooterTranslate:", footerTranslate);
-                console.log("FooterOpacity:", footerOpacity);
-              },
-            }
+          onScroll={Animated.event( // Event listener for scroll
+            [{ nativeEvent: { contentOffset: { y: scrollAnim } } }], // bounds the scrollAnim value to the Y-axis scroll position
+            {useNativeDriver: true,}
           )}
           scrollEventThrottle={16}
         >
@@ -160,19 +134,20 @@ const App = () => {
             ))}
           </View>
         </Animated.ScrollView>
-  
+      </View>
+
         {/* Footer */}
         <Animated.View
           style={[
             styles.footer,
             {
-              transform: [{ translateY: footerTranslate }], // Slide up/down
-              opacity: footerOpacity, // Fade in/out
+              transform: [{ translateY: footerTranslate }], // Applying translation
+              opacity: footerOpacity, // Applying opacity
             },
           ]}
           onLayout={(event) => {
             const { height } = event.nativeEvent.layout;
-            cusotmfunc(height);
+            setNavbarHeight(height); // Just to get the height of the footer
           }}
         >
           <View style={styles.footerLeft}>
@@ -191,7 +166,6 @@ const App = () => {
             </TouchableOpacity>
           </View>
         </Animated.View>
-      </View>
     </SafeAreaView>
   
   );
