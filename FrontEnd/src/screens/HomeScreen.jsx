@@ -11,9 +11,10 @@ import {
 import DocumentPicker from 'react-native-document-picker';
 import { SafeAreaView } from 'react-native';
 import RNFS from 'react-native-fs';
+import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
 
-const App = () => {
+const App = ( {route, navigation} ) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accountName, setAccountName] = useState('Guest');
   const [profiles, setProfiles] = useState([]);
@@ -21,6 +22,8 @@ const App = () => {
 
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
+
+  console.log("TESTETSTTSTSTSTSTSTS", navigation);
 
   const clampedScroll = Animated.diffClamp( // Value used for footer translation and opacity interpolation
     Animated.add(scrollAnim, offsetAnim),
@@ -113,9 +116,34 @@ const App = () => {
     }
   };
 
+  const handleBulkFollow = (platform) => {
+    Alert.alert('Bulk Follow', `Following all users on ${platform}!`);
+    // API call or bulk follow implementation here
+  };
+
+  const BulkFollowDropdown = ({ onSelectPlatform }) => (
+    <ModalDropdown
+      options={['Twitter', 'Facebook', 'Instagram']}
+      dropdownStyle={styles.dropdown}
+      onSelect={(index, value) => onSelectPlatform(value)}
+    >
+      <TouchableOpacity style={styles.bulkFollowButton}>
+        <Text style={styles.bulkFollowText}>Bulk Follow</Text>
+      </TouchableOpacity>
+    </ModalDropdown>
+  );
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
+
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+          <BulkFollowDropdown onSelectPlatform={handleBulkFollow} />
+        </View>
   
         {/* Dynamic Profile Boxes */}
         <Animated.ScrollView
@@ -175,6 +203,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: '#f5f5f5',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  backArrow: {
+    fontSize: 24,
+    color: '#007bff',
+  },
+  bulkFollowButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  bulkFollowText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   profilesContainer: {
     paddingHorizontal: 10,
     flex: 1,
@@ -203,6 +256,7 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
     fontWeight: 'bold',
   },
-});
+}
+);
 
 export default App;
