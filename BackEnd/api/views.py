@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, JSONParser
+from SupaBaseClient import supabase
 import json
 
 @api_view(['POST'])
@@ -30,3 +31,44 @@ def upload_json_file(request):
 
     except json.JSONDecodeError:
         return Response({"error": "Invalid JSON file."}, status=400)
+
+@api_view(['POST'])
+def get_profile_mappings(request):
+    """
+    API to fetch profiles with social media URLs based on usernames.
+    """
+    usernames = request.data.get("usernames", [])
+
+    if not usernames or not isinstance(usernames, list):
+        return Response({"error": "Invalid or missing 'usernames' list."}, status=400)
+
+    try:
+        response = (
+            supabase.table("socials_mapping")
+            .select("*")
+            .in_("tiktok_username", usernames)  # Filters rows where tiktok_username matches any value in the list
+            .execute()
+        )
+    except Exception as e:
+        return Response({"error": e}, status=500)
+
+    if not response or not response.data:
+        return Response({"error": "No profiles found for the given usernames."}, status=404)
+
+    mapping_arr = response.data
+
+    if not mapping_arr or not isinstance(mapping_arr, list):
+        return Response({"error": "Invalid or missing 'mapping_arr' list."}, status=400)
+
+    result = []
+    for profile in mapping_arr:
+        result.append({
+            "UserName": profile["tiktok_username"],
+            "profile_picture": profile["profile_picture_url"],
+            "instagram_url": profile["instagram_username"],
+            "facebook_url": profile["facebook_username"],
+            "twitter_url": profile["x_username"],
+            "reddit_url": profile["reddit_username"],
+        })
+
+    return Response({"profiles": result}, status=200)
