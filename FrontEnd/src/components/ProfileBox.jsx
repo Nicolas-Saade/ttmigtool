@@ -1,36 +1,36 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 
-const ProfileBox = ({ name }) => {
+const ProfileBox = ({ name, profilePicture, instagramUrl, facebookUrl, twitterUrl, redditUrl }) => {
   return (
     <View style={styles.box}>
       <View style={styles.row}>
         {/* Profile Picture */}
         <Image 
-          source={{ uri: 'https://via.placeholder.com/100' }} // Placeholder for profile picture
+          source={{ uri: profilePicture || 'https://via.placeholder.com/100' }} // Placeholder for profile picture
           style={styles.image} 
         />
         {/* Social Media Icons */}
         <View style={styles.iconsContainer}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => openUrl(facebookUrl)}>
             <Image 
               source={require('../assets/fb-emb-img.webp')} 
               style={styles.icon} 
             />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => openUrl(instagramUrl)}>
             <Image 
               source={require('../assets/insta-emd-img.webp')} 
               style={styles.icon} 
             />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => openUrl(twitterUrl)}>
             <Image 
               source={require('../assets/X-emb-img.png')} 
               style={styles.icon} 
             />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => openUrl(redditUrl)}>
             <Image 
               source={require('../assets/reddit-emb-img.png')} 
               style={styles.icon} 

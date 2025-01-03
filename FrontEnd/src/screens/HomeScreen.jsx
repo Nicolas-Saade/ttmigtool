@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { 
   View, 
@@ -19,6 +19,8 @@ const App = ( {route, navigation} ) => {
   const [accountName, setAccountName] = useState('Guest');
   const [profiles, setProfiles] = useState([]);
   const [navbarHeight, setNavbarHeight] = useState(0);
+
+  const [loading, setLoading] = useState(true);
 
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
@@ -91,7 +93,7 @@ const App = ( {route, navigation} ) => {
           },
         });
 
-        console.log('Response from backenddddd:', response.data);
+        console.log('Response from backenddddd:', response.data); // 
         const { following } = response.data;
 
         let prof = [];
@@ -99,6 +101,14 @@ const App = ( {route, navigation} ) => {
         for (const profile of following) {
           prof.push(profile.UserName);
         }
+
+        // Use the prof list (just the list of usernames)
+        const mapped_profiles_response = await axios.post('http://127.0.0.1:8000/api/profile-mapping/', {
+          usernames,
+        });  
+
+        console.log('Profiles with full details:', profilesResponse.data);
+        prof = profilesResponse.data;
 
         setProfiles([...prof]);
 
@@ -157,7 +167,14 @@ const App = ( {route, navigation} ) => {
           <View style={styles.gridContainer}>
             {profiles.map((profile, index) => (
               <View key={index} style={styles.profileWrapper}>
-                <ProfileBox name={profile} />
+                <ProfileBox 
+                  name={profile.UserName}
+                  profilePicture={profile.profile_picture}
+                  instagramUrl={profile.instagram_url}
+                  facebookUrl={profile.facebook_url}
+                  twitterUrl={profile.twitter_url}
+                  redditUrl={profile.reddit_url}
+                />
               </View>
             ))}
           </View>
