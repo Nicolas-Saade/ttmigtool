@@ -5,3 +5,4 @@ BackEnd/.DS_Store
 __pycache__/
 *.env
 BackEnd/.env
+BackEnd/config/

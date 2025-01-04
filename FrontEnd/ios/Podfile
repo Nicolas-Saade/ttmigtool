@@ -1,3 +1,4 @@
+use_modular_headers!
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
@@ -16,6 +17,13 @@ end
 
 target 'FrontEnd' do
   config = use_native_modules!
+
+  # Add Firebase dependencies
+  pod 'Firebase/Core' # For Firebase Analytics
+  pod 'Firebase/Auth' # For Firebase Authentication 
+  pod 'Firebase/Firestore' # For Firebase Firestore 
+  pod 'Firebase/Database' #(for Realtime Database)
+  pod 'Firebase/Messaging' #(for Push Notifications)
 
   use_react_native!(
     :path => config[:reactNativePath],
