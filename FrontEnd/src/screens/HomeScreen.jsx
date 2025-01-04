@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native';
 import RNFS from 'react-native-fs';
 import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
+import { api } from '../utils';
 
 const App = ( {route, navigation} ) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -24,8 +25,6 @@ const App = ( {route, navigation} ) => {
 
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
-
-  console.log("TESTETSTTSTSTSTSTSTS", navigation);
 
   const clampedScroll = Animated.diffClamp( // Value used for footer translation and opacity interpolation
     Animated.add(scrollAnim, offsetAnim),
@@ -48,6 +47,11 @@ const App = ( {route, navigation} ) => {
   // PlaceHolder for login
   const handleLogin = () => {
     setIsLoggedIn(true);
+    setAccountName('Guest');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
     setAccountName('Nicolas Saade');
   };
 
@@ -69,6 +73,7 @@ const App = ( {route, navigation} ) => {
   // PlaceHolder for file drop
   const handleFileDrop = async () => {
     const file = await handleFileSelect();
+    let response = null;
     try {
       if (file) {
         console.log('File successfully dropped and parsed:', {
@@ -77,8 +82,6 @@ const App = ( {route, navigation} ) => {
           size: file.size,
           filito: file,
         });
-  
-        const fileContents = await RNFS.readFile(file.uri, 'utf8');
 
         const formData = new FormData();
         formData.append('file', {
@@ -87,13 +90,24 @@ const App = ( {route, navigation} ) => {
           type: file.type,
         });
 
-        const response = await axios.post('http://127.0.0.1:8000/api/upload-json/', formData, {
+        console.log("FORM DATA", formData);
+
+        response = await api.post('/api/upload-json/', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
+      } else {
+        Alert.alert('Error', 'No file was selected');
+      } 
+    }catch (error) {
+        Alert.alert('Error', `Failed to read @1st ENDPT: ${error.message}`);
+        console.log('File error @1st ENDPT:', error.toJSON());
+      }
 
-        console.log('Response from backenddddd:', response.data); // 
+      console.log('Response from backenddddd:', response.data);
+
+      try{
         const { following } = response.data;
 
         let prof = [];
@@ -102,27 +116,32 @@ const App = ( {route, navigation} ) => {
           prof.push(profile.UserName);
         }
 
-        // Use the prof list (just the list of usernames)
-        const mapped_profiles_response = await axios.post('http://127.0.0.1:8000/api/profile-mapping/', {
-          usernames,
-        });  
+        console.log('Profiles:', prof);
 
-        console.log('Profiles with full details:', profilesResponse.data);
-        prof = profilesResponse.data;
+        // Use the prof list (just the list of usernames)
+        const mapped_profiles_response = await api.post(
+          '/api/profile-mapping/',
+          { prof },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        console.log('Profiles with full details:', mapped_profiles_response.data);
+        prof = mapped_profiles_response.data['profiles'];
 
         setProfiles([...prof]);
 
         Alert.alert('Success', `JSON file "${file.name}" was read and parsed successfully!`);
-      } else {
-        Alert.alert('Error', 'No file was dropped.');
-      }
     } catch (error) {
       if (error instanceof SyntaxError) {
         Alert.alert('Error', 'Failed to parse the JSON file. Ensure the file contains valid JSON.');
       } else {
         Alert.alert('Error', `Failed to read the file: ${error.message}`);
       }
-      console.error('File reading or parsing error:', error);
+      console.error('File error @2nd ENDPT:', error.toJSON());
     }
   };
 

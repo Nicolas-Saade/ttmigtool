@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { openUrl } from '../utils';
 
 const ProfileBox = ({ name, profilePicture, instagramUrl, facebookUrl, twitterUrl, redditUrl }) => {
   return (
