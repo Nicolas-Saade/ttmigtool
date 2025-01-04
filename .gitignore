@@ -3,4 +3,6 @@ node_modules/
 BackEnd/.DS_Store
 *.pyc
 __pycache__/
+*.env
+BackEnd/.env
 BackEnd/config/
