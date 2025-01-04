@@ -37,7 +37,7 @@ def get_profile_mappings(request):
     """
     API to fetch profiles with social media URLs based on usernames.
     """
-    usernames = request.data.get("usernames", [])
+    usernames = request.data.get("prof", []) # Check the HomeScreen.jsx file @/api/profile-mapping/ axios call to check the prof array
 
     if not usernames or not isinstance(usernames, list):
         return Response({"error": "Invalid or missing 'usernames' list."}, status=400)
@@ -56,7 +56,6 @@ def get_profile_mappings(request):
         return Response({"error": "No profiles found for the given usernames."}, status=404)
 
     mapping_arr = response.data
-
     if not mapping_arr or not isinstance(mapping_arr, list):
         return Response({"error": "Invalid or missing 'mapping_arr' list."}, status=400)
 
@@ -71,4 +70,6 @@ def get_profile_mappings(request):
             "reddit_url": profile["reddit_username"],
         })
 
-    return Response({"profiles": result}, status=200)
+    if (len(usernames) == len(result) and len(usernames) == len(mapping_arr)):
+        print("ALL CHECKS PASS!!!!!!!")
+        return Response({"profiles": result}, status=200)
