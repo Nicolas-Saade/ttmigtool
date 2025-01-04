@@ -23,8 +23,6 @@ const App = ( {route, navigation} ) => {
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
 
-  console.log("TESTETSTTSTSTSTSTSTS", navigation);
-
   const clampedScroll = Animated.diffClamp( // Value used for footer translation and opacity interpolation
     Animated.add(scrollAnim, offsetAnim),
     0,
@@ -91,7 +89,6 @@ const App = ( {route, navigation} ) => {
           },
         });
 
-        console.log('Response from backenddddd:', response.data);
         const { following } = response.data;
 
         let prof = [];
