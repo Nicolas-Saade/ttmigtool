@@ -90,8 +90,6 @@ const App = ( {route, navigation} ) => {
           type: file.type,
         });
 
-        console.log("FORM DATA", formData);
-
         response = await api.post('/api/upload-json/', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -105,8 +103,6 @@ const App = ( {route, navigation} ) => {
         console.log('File error @1st ENDPT:', error.toJSON());
       }
 
-      console.log('Response from backenddddd:', response.data);
-
       try{
         const { following } = response.data;
 
@@ -115,8 +111,6 @@ const App = ( {route, navigation} ) => {
         for (const profile of following) {
           prof.push(profile.UserName);
         }
-
-        console.log('Profiles:', prof);
 
         // Use the prof list (just the list of usernames)
         const mapped_profiles_response = await api.post(
@@ -128,8 +122,7 @@ const App = ( {route, navigation} ) => {
             },
           }
         );
-
-        console.log('Profiles with full details:', mapped_profiles_response.data);
+        
         prof = mapped_profiles_response.data['profiles'];
 
         setProfiles([...prof]);

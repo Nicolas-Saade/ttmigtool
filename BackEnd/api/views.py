@@ -71,5 +71,4 @@ def get_profile_mappings(request):
         })
 
     if (len(usernames) == len(result) and len(usernames) == len(mapping_arr)):
-        print("ALL CHECKS PASS!!!!!!!")
         return Response({"profiles": result}, status=200)
