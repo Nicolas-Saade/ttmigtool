@@ -1,6 +1,8 @@
 ⚠️⚠️ Instructions for upcoming developers:
 
 Download Android Studio and XCode.
+Don't initiate your project in desktop, the iCloud syncing will cause issues with building the app, iniate it somewhere that is not backed by iCloud
+Try starting the app in main, if you get any build errors with conflicting react versions, switch to DBsetup and try running the app there
 
 # General Setup #
 In the Back End Dir Run:
