@@ -31,7 +31,6 @@
 		00E356EE1AD99517003FC87E /* FrontEndTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FrontEndTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* FrontEndTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FrontEndTests.m; sourceTree = "<group>"; };
-		10CCFCA7AA90C8B2C218C099 /* libPods-FrontEnd-FrontEndTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-FrontEnd-FrontEndTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07F961A680F5B00A75B9A /* FrontEnd.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FrontEnd.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = FrontEnd/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = FrontEnd/AppDelegate.mm; sourceTree = "<group>"; };
@@ -411,45 +410,6 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FrontEnd-FrontEndTests/Pods-FrontEnd-FrontEndTests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C9173AFA2A9C3FED199E9E04 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-FrontEnd-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		EBA3397D0395B9A973938E2D /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-FrontEnd/Pods-FrontEnd-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-FrontEnd/Pods-FrontEnd-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FrontEnd/Pods-FrontEnd-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -551,6 +511,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -581,6 +542,103 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseAuth/FirebaseAuth.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseDatabase/FirebaseDatabase.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseFirestore/FirebaseFirestore.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/FirebaseSharedSwift/FirebaseSharedSwift.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Private/grpc/gRPC-Core.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/CoreModules/React-CoreModules.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/DoubleConversion/DoubleConversion.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/FBLPromises/PromisesObjC.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/FirebaseAppCheckInterop/FirebaseAppCheckInterop.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/FirebaseAuthInterop/FirebaseAuthInterop.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/FirebaseCore/FirebaseCore.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/FirebaseCoreExtension/FirebaseCoreExtension.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/FirebaseFirestoreInternal/FirebaseFirestoreInternal.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/FirebaseInstallations/FirebaseInstallations.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/FirebaseMessaging/FirebaseMessaging.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/GTMSessionFetcher/GTMSessionFetcher.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/GoogleDataTransport/GoogleDataTransport.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/GoogleUtilities/GoogleUtilities.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTAnimation/React-RCTAnimation.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTBlob/React-RCTBlob.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTDeprecation/RCTDeprecation.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTFabric/React-RCTFabric.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTImage/React-RCTImage.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTLinking/React-RCTLinking.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTNetwork/React-RCTNetwork.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTSettings/React-RCTSettings.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTText/React-RCTText.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTTypeSafety/RCTTypeSafety.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTVibration/React-RCTVibration.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RNFS/RNFS.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RNGestureHandler/RNGestureHandler.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RNReanimated/RNReanimated.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RNScreens/RNScreens.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RNVectorIcons/RNVectorIcons.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React/React-Core.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ReactCodegen/ReactCodegen.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ReactCommon/React-RuntimeApple.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ReactCommon/ReactCommon.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_Fabric/React-Fabric.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_FabricComponents/React-FabricComponents.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_NativeModulesApple/React-NativeModulesApple.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_RCTAppDelegate/React-RCTAppDelegate.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RecaptchaInterop/RecaptchaInterop.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/SocketRocket/SocketRocket.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/absl/abseil.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/cxxreact/React-cxxreact.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/fmt/fmt.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/folly/RCT-Folly.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/glog/glog.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/grpcpp/gRPC-C++.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/jserrorhandler/React-jserrorhandler.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/jsi/React-jsi.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/jsinspector_modern/React-jsinspector.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/jsireact/React-jsiexecutor.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/leveldb/leveldb-library.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/logger/React-logger.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/nanopb/nanopb.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/openssl_grpc/BoringSSL-GRPC.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_config/React-nativeconfig.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_debug/React-debug.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_featureflags/React-featureflags.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_native_document_picker/react-native-document-picker.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_native_safe_area_context/react-native-safe-area-context.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_nativemodule_defaults/React-defaultsnativemodule.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_nativemodule_dom/React-domnativemodule.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_nativemodule_featureflags/React-featureflagsnativemodule.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_nativemodule_idlecallbacks/React-idlecallbacksnativemodule.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_nativemodule_microtasks/React-microtasksnativemodule.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_performance_timeline/React-performancetimeline.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_components_image/React-FabricImage.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_consistency/React-rendererconsistency.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_debug/React-rendererdebug.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_graphics/React-graphics.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_imagemanager/React-ImageManager.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_mapbuffer/React-Mapbuffer.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_runtimescheduler/React-runtimescheduler.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_runtime/React-RuntimeCore.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_runtime_hermes/React-RuntimeHermes.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_utils/React-utils.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/reacthermes/React-hermes.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/reactperflogger/React-perflogger.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/yoga/Yoga.modulemap\"",
+					"$(inherited)",
+					"$(inherited)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+					"-Wno-comma",
+					"-Wno-shorten-64-to-32",
+					"-DREACT_NATIVE_MINOR_VERSION=76",
+					"-DRCT_NEW_ARCH_ENABLED",
+					"-DREANIMATED_VERSION=3.16.6",
+					"-DNDEBUG",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
