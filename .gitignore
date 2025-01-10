@@ -6,3 +6,6 @@ __pycache__/
 *.env
 BackEnd/.env
 BackEnd/config/
+myenv/
+requirements.txt
+watchman/
