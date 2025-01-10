@@ -26,6 +26,8 @@ const App = ( {/*route,*/ navigation} ) => {
 
   const [showLoginModal, setShowLoginModal] = useState(false);
 
+  //const [showLoginModal, setShowLoginModal] = useState(false);
+
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
 
