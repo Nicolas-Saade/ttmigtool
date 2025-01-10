@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+//import axios from 'axios';
 import { 
   View, 
   Text, 
@@ -11,18 +11,18 @@ import {
 import DocumentPicker from 'react-native-document-picker';
 import { SafeAreaView } from 'react-native';
 import { Modal, TextInput } from 'react-native';
-import RNFS from 'react-native-fs';
+//import RNFS from 'react-native-fs';
 import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
 import { api } from '../utils';
 
-const App = ( {route, navigation} ) => {
+const App = ( {/*route,*/ navigation} ) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accountName, setAccountName] = useState('Guest');
   const [profiles, setProfiles] = useState([]);
   const [navbarHeight, setNavbarHeight] = useState(0);
-
-  const [loading, setLoading] = useState(true);
+  const [showRegisterModal, setShowRegisterModal] = useState(false); // State for registration modal
+ // const [loading, setLoading] = useState(true);
 
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -271,10 +271,64 @@ const App = ( {route, navigation} ) => {
               {/* Sign Up Button */}
               <TouchableOpacity
                 style={styles.signUpButton}
-                onPress={() => Alert.alert('Sign Up pressed')}
+                onPress={() => {
+                  setShowLoginModal(false); // Close login modal
+                  setShowRegisterModal(true); // Open register modal
+                }}
               >
                 <Text style={styles.signUpButtonText}>Sign Up</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Registration Modal */}
+        <Modal
+          visible={showRegisterModal}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowRegisterModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Register</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="First Name"
+                autoCapitalize="words"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                autoCapitalize="words"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email Address"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry
+              />
+              
+              {/* Buttons Row */}
+              <View style={styles.buttonsRow}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowRegisterModal(false)}
+                >
+                  <Text style={styles.closeButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.registerButton}
+                  onPress={() => Alert.alert('Register pressed')}
+                >
+                  <Text style={styles.registerButtonText}>Register</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -410,6 +464,18 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   signUpButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  registerButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginLeft: 10,
+  },
+  registerButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     textAlign: 'center',
