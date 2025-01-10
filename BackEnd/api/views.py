@@ -1,8 +1,10 @@
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, JSONParser
+from .serializers import UserProfileSerializer
 from SupaBaseClient import supabase
 import json
+
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser])  # Enable file upload and parsing
@@ -31,6 +33,21 @@ def upload_json_file(request):
 
     except json.JSONDecodeError:
         return Response({"error": "Invalid JSON file."}, status=400)
+
+#API to create a new user profile in the database.
+@api_view(['POST'])
+def create_user_profile(request):
+    """
+    API to create a new user profile in the database.
+    """
+    from .serializers import UserProfileSerializer
+
+    serializer = UserProfileSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()  # Save the validated data to the database
+        return Response({"message": "User profile created successfully!"}, status=201)
+    return Response(serializer.errors, status=400)
+
 
 @api_view(['POST'])
 def get_profile_mappings(request):
