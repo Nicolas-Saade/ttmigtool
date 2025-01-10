@@ -7,4 +7,5 @@ __pycache__/
 BackEnd/.env
 BackEnd/config/
 venv/
+requirements.txt
 myenv/
