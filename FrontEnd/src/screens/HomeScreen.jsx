@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import { SafeAreaView } from 'react-native';
+import { Modal, TextInput } from 'react-native';
 import RNFS from 'react-native-fs';
 import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
@@ -22,6 +23,8 @@ const App = ( {route, navigation} ) => {
   const [navbarHeight, setNavbarHeight] = useState(0);
 
   const [loading, setLoading] = useState(true);
+
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
@@ -45,10 +48,15 @@ const App = ( {route, navigation} ) => {
   });
 
   // PlaceHolder for login
+  // const handleLogin = () => {
+  //   setIsLoggedIn(true);
+  //   setAccountName('Guest');
+  // };
+
   const handleLogin = () => {
-    setIsLoggedIn(true);
-    setAccountName('Guest');
+    setShowLoginModal(true); // Open the modal
   };
+  
 
   const handleLogout = () => {
     setIsLoggedIn(false);
@@ -223,7 +231,57 @@ const App = ( {route, navigation} ) => {
             </TouchableOpacity>
           </View>
         </Animated.View>
+        <Modal
+          visible={showLoginModal}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowLoginModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Login</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry
+              />
+              
+              {/* Buttons Row */}
+              <View style={styles.buttonsRow}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowLoginModal(false)}
+                >
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.loginButton}
+                  onPress={() => Alert.alert('Login pressed')}
+                >
+                  <Text style={styles.loginButtonText}>Login</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Sign Up Button */}
+              <TouchableOpacity
+                style={styles.signUpButton}
+                onPress={() => Alert.alert('Sign Up pressed')}
+              >
+                <Text style={styles.signUpButtonText}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
     </SafeAreaView>
+
+    
   
   );
 };
@@ -232,6 +290,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  // Header styles
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -257,9 +316,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  // Profile grid styles
   profilesContainer: {
-    paddingHorizontal: 10,
     flex: 1,
+    paddingHorizontal: 10,
   },
   gridContainer: {
     flexDirection: 'row',
@@ -269,6 +329,7 @@ const styles = StyleSheet.create({
   profileWrapper: {
     width: '48%',
   },
+  // Footer styles
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -282,10 +343,78 @@ const styles = StyleSheet.create({
   footerCenter: {},
   footerRight: {},
   footerText: {
-    paddingBottom: 0,
     fontWeight: 'bold',
   },
-}
-);
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  input: {
+    width: '100%',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  // Button styles
+  buttonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 10,
+  },
+  closeButton: {
+    backgroundColor: '#f44336',
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  loginButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginLeft: 10,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  signUpButton: {
+    marginTop: 20,
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    width: '100%',
+  },
+  signUpButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+});
+
 
 export default App;
