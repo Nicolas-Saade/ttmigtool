@@ -38,15 +38,31 @@ def upload_json_file(request):
 @api_view(['POST'])
 def create_user_profile(request):
     """
-    API to create a new user profile in the database.
+    API to create a new user profile in the Supabase database.
     """
-    from .serializers import UserProfileSerializer
+    # Extract data from the request
+    email = request.data.get("email")
+    password = request.data.get("password")
+    first_name = request.data.get("first_name")
+    last_name = request.data.get("last_name")
+    json_file = request.data.get("json_file", {})  # Optional field
 
-    serializer = UserProfileSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()  # Save the validated data to the database
+    if not email or not password or not first_name or not last_name:
+        return Response({"error": "Missing required fields."}, status=400)
+
+    try:
+        response = supabase.table("UserProfile").insert({
+            "email": email,
+            "password": password,
+            "first_name": first_name,
+            "last_name": last_name,
+            "json_file": json_file,
+        }).execute()
+
         return Response({"message": "User profile created successfully!"}, status=201)
-    return Response(serializer.errors, status=400)
+    except Exception as e:
+        return Response({"error": f"Failed to create user profile: {str(e)}"}, status=500)
+
 
 
 @api_view(['POST'])
