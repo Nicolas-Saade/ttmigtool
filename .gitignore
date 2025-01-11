@@ -9,3 +9,6 @@ BackEnd/config/
 venv/
 requirements.txt
 myenv/
+BackEnd/Database/top_tiktokers.csv
+BackEnd/.env
+
