@@ -62,6 +62,47 @@ const App = ( {/*route,*/ navigation} ) => {
   const handleLogin = () => {
     setShowLoginModal(true); // Open the modal
   };
+
+  const handleCheckEmail = async () => {
+    const emailInput = email.trim(); // Ensure email input is trimmed
+    const passwordInput = password.trim(); // Ensure password input is trimmed
+    if (!emailInput || !passwordInput) {
+        Alert.alert('Error', 'Please enter both email and password.');
+        return;
+    }
+
+    try {
+        // Send API request to check if email exists in the database
+        const response = await api.post('/api/check-email/', { email: emailInput });
+
+        if (response.status === 200) {
+            const storedPassword = response.data.password; // Assuming the API returns the password hash for comparison
+            
+            if (storedPassword === passwordInput) {
+                // Password matches, allow the user to sign in
+                Alert.alert('Success', 'Login successful!');
+                setIsLoggedIn(true); // Set user as logged in
+                setAccountName(response.data.first_name + ' ' + response.data.last_name); // Update account name
+                setShowLoginModal(false); // Close the login modal
+                setPassword(''); // Clear the password field
+            } else {
+                // Password does not match
+                Alert.alert('Error', 'Incorrect password. Please try again.');
+                setPassword(''); // Clear the password field
+            }
+        } else {
+            Alert.alert('Error', 'Unexpected response from the server.');
+        }
+    } catch (error) {
+        if (error.response && error.response.status === 404) {
+            // Email not found
+            Alert.alert('Error', 'Email not found. Please register first.');
+        } else {
+            console.error('Error checking email:', error.message);
+            Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+        }
+    }
+  };
   
 
   const handleLogout = () => {
@@ -135,69 +176,112 @@ const App = ( {/*route,*/ navigation} ) => {
   const handleFileDrop = async () => {
     const file = await handleFileSelect();
     let response = null;
+
     try {
-      if (file) {
-        console.log('File successfully dropped and parsed:', {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          filito: file,
-        });
+        if (file) {
+            console.log('File successfully dropped and parsed:', {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+            });
 
-        const formData = new FormData();
-        formData.append('file', {
-          uri: file.uri,
-          name: file.name,
-          type: file.type,
-        });
+            const formData = new FormData();
+            formData.append('file', {
+                uri: file.uri,
+                name: file.name,
+                type: file.type,
+            });
 
-        response = await api.post('/api/upload-json/', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-      } else {
-        Alert.alert('Error', 'No file was selected');
-      } 
-    }catch (error) {
-        Alert.alert('Error', `Failed to read @1st ENDPT: ${error.message}`);
-        console.log('File error @1st ENDPT:', error.toJSON());
-      }
+            // Include user email if logged in
+            if (email) {
+                // Alert.alert('Error', 'You must be logged in to upload a file.');
+                // return;
+                formData.append('email', email);
+            }
+            
 
-      try{
-        const { following } = response.data;
+            // Send the file to the backend
+            response = await api.post('/api/upload-json/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
 
-        let prof = [];
-
-        for (const profile of following) {
-          prof.push(profile.UserName);
+            // Check if the response is successful
+            if (response?.status === 200) {
+                Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
+            } else {
+                console.error('Error response:', response?.data);
+                Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
+                return;
+            }
+        } else {
+            Alert.alert('Error', 'No file was selected.');
+            return;
         }
-
-        // Use the prof list (just the list of usernames)
-        const mapped_profiles_response = await api.post(
-          '/api/profile-mapping/',
-          { prof },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        
-        prof = mapped_profiles_response.data['profiles'];
-
-        setProfiles([...prof]);
-
-        Alert.alert('Success', `JSON file "${file.name}" was read and parsed successfully!`);
     } catch (error) {
-      if (error instanceof SyntaxError) {
-        Alert.alert('Error', 'Failed to parse the JSON file. Ensure the file contains valid JSON.');
-      } else {
-        Alert.alert('Error', `Failed to read the file: ${error.message}`);
-      }
-      console.error('File error @2nd ENDPT:', error.toJSON());
+        console.error('File upload error:', error.message);
+        if (error.response) {
+            Alert.alert('Error', error.response?.data?.error || 'An unexpected error occurred.');
+        } else {
+            Alert.alert('Error', 'An unexpected error occurred.');
+        }
+        return;
     }
-  };
+
+    // Process following data after a successful file upload
+    try {
+        const { following } = response?.data || {};
+
+        if (following && Array.isArray(following)) {
+            console.log('Following List:', following);
+
+            const prof = following.map(profile => {
+                if (profile.UserName) {
+                    return profile.UserName;
+                } else {
+                    console.warn('Invalid following entry, missing UserName:', profile);
+                    return null;
+                }
+            }).filter(Boolean); // Remove null values
+
+            if (prof.length === 0) {
+                Alert.alert('Error', 'No valid usernames found in the following list.');
+                return;
+            }
+
+            console.log('Usernames to map:', prof);
+
+            // Fetch mapped profiles
+            const mappedProfilesResponse = await api.post(
+                '/api/profile-mapping/',
+                { prof },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
+            console.log('Mapped Profiles:', mappedProfiles);
+
+            setProfiles([...mappedProfiles]);
+
+            Alert.alert('Success', 'Profiles successfully mapped!');
+        } else {
+            Alert.alert('Error', 'No "following" data found in the uploaded JSON file.');
+        }
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            Alert.alert('Error', 'Failed to parse the JSON file. Ensure the file contains valid JSON.');
+        } else {
+            console.error('Profile mapping error:', error.response?.data || error.message);
+            Alert.alert('Error', 'Failed to process profiles.');
+        }
+    }
+};
+
 
   const handleBulkFollow = (platform) => {
     Alert.alert('Bulk Follow', `Following all users on ${platform}!`);
@@ -303,10 +387,14 @@ const App = ( {/*route,*/ navigation} ) => {
                 placeholder="Email"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail} // Update state
               />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
+                value={password}
+                onChangeText={setPassword} // Update state
                 secureTextEntry
               />
               
@@ -320,7 +408,7 @@ const App = ( {/*route,*/ navigation} ) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.loginButton}
-                  onPress={() => Alert.alert('Login pressed')}
+                  onPress={handleCheckEmail} // Call handleCheckEmail instead of handleLogin
                 >
                   <Text style={styles.loginButtonText}>Login</Text>
                 </TouchableOpacity>
