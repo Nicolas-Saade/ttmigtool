@@ -8,3 +8,6 @@ BackEnd/.env
 BackEnd/config/
 requirements.txt
 myenv/
+BackEnd/Database/top_tiktokers.csv
+BackEnd/.env
+
