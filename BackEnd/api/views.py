@@ -6,7 +6,7 @@ from SupaBaseClient import supabase
 import json
 
 
-@api_view(['POST'])  # Changed to POST to accept email in request body
+@api_view(['POST'])
 def check_email(request):
     """API to check if an email exists in the database and return user details."""
     email = request.data.get('email')
@@ -15,7 +15,7 @@ def check_email(request):
 
     try:
         # Query the database for the email
-        response = supabase.table("UserProfile").select("*").eq("email", email).execute()
+        response = supabase.table("user_profile").select("*").eq("email", email).execute()
         if response.data:
             user = response.data[0]
             return Response({
@@ -23,11 +23,12 @@ def check_email(request):
                 "first_name": user.get("first_name"),
                 "last_name": user.get("last_name"),
                 "password": user.get("password"),  # Include the stored password
+                "json_file": user.get("json_file"),  # Include the JSON file
             }, status=200)
         else:
             return Response({"error": "Email not found."}, status=404)
     except Exception as e:
-        return Response({"error": f"An error occurred: {str(e)}"}, status=500)
+        return Response({"error": f"An error occurred: {str(e)}"}, status=500)  
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser])  # Enable file upload and parsing
@@ -38,7 +39,7 @@ def upload_json_file(request):
 
     uploaded_file = request.FILES.get('file', None)
     if not uploaded_file:
-        return Response({"error": "No file provided."}, status=400)
+        return Response({"error": " file provided."}, status=400)
 
     try:
         # Read and parse the uploaded JSON file
@@ -54,12 +55,12 @@ def upload_json_file(request):
 
         # If user_email is provided, associate the JSON file with the user's database entry
         if user_email:
-            response = supabase.table("UserProfile").select("*").eq("email", user_email).execute()
+            response = supabase.table("user_profile").select("*").eq("email", user_email).execute()
             if not response.data:
                 return Response({"error": "User not found."}, status=404)
 
             # Update the user's database entry with the JSON file
-            update_response = supabase.table("UserProfile").update({"json_file": json_data}).eq("email", user_email).execute()
+            update_response = supabase.table("user_profile").update({"json_file": json_data}).eq("email", user_email).execute()
 
             if not update_response.data:
                 return Response({"error": "Failed to update the database entry for the user."}, status=500)
@@ -98,7 +99,7 @@ def create_user_profile(request):
         return Response({"error": "Missing required fields."}, status=400)
 
     try:
-        response = supabase.table("UserProfile").insert({
+        response = supabase.table("user_profile").insert({
             "email": email,
             "password": password,
             "first_name": first_name,
