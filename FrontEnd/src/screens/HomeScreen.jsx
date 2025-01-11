@@ -76,15 +76,21 @@ const App = ( {/*route,*/ navigation} ) => {
         const response = await api.post('/api/check-email/', { email: emailInput });
 
         if (response.status === 200) {
-            const storedPassword = response.data.password; // Assuming the API returns the password hash for comparison
+            const user = response.data;
+            const storedPassword = user.password; // Assuming the API returns the password
             
             if (storedPassword === passwordInput) {
                 // Password matches, allow the user to sign in
                 Alert.alert('Success', 'Login successful!');
                 setIsLoggedIn(true); // Set user as logged in
-                setAccountName(response.data.first_name + ' ' + response.data.last_name); // Update account name
+                setAccountName(`${user.first_name} ${user.last_name}`); // Update account name
                 setShowLoginModal(false); // Close the login modal
                 setPassword(''); // Clear the password field
+
+                // Fetch and display the following list if the JSON file exists and is not empty
+                if (user.json_file && Object.keys(user.json_file).length > 0) {
+                    processFollowingFromJson(user.json_file);
+                } 
             } else {
                 // Password does not match
                 Alert.alert('Error', 'Incorrect password. Please try again.');
@@ -101,6 +107,62 @@ const App = ( {/*route,*/ navigation} ) => {
             console.error('Error checking email:', error.message);
             Alert.alert('Error', 'An unexpected error occurred. Please try again.');
         }
+    }
+  };
+
+  const processFollowingFromJson = async (jsonFile) => {
+    try {
+        if (!jsonFile || Object.keys(jsonFile).length === 0) {
+            Alert.alert('Notice', 'The JSON file is empty or invalid.');
+            return;
+        }
+
+        const profile = jsonFile.Profile || {};
+        const followingList = profile["Following List"]?.Following || [];
+
+        if (followingList.length === 0) {
+            //Alert.alert('Notice', 'No "following" data found in your JSON file.');
+            return;
+        }
+
+        console.log('Following List:', followingList);
+
+        const prof = followingList.map(profile => {
+            if (profile.UserName) {
+                return profile.UserName;
+            } else {
+                console.warn('Invalid following entry, missing UserName:', profile);
+                return null;
+            }
+        }).filter(Boolean); // Remove null values
+
+        if (prof.length === 0) {
+            Alert.alert('Notice', 'No valid usernames found in the following list.');
+            return;
+        }
+
+        console.log('Usernames to map:', prof);
+
+        // Fetch mapped profiles
+        const mappedProfilesResponse = await api.post(
+            '/api/profile-mapping/',
+            { prof },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
+        console.log('Mapped Profiles:', mappedProfiles);
+
+        setProfiles([...mappedProfiles]);
+
+        Alert.alert('Success', 'Profiles successfully mapped from your data!');
+    } catch (error) {
+        console.error('Profile processing error:', error.message);
+        Alert.alert('Error', 'Failed to process profiles.');
     }
   };
   
@@ -280,7 +342,7 @@ const App = ( {/*route,*/ navigation} ) => {
             Alert.alert('Error', 'Failed to process profiles.');
         }
     }
-};
+  };
 
 
   const handleBulkFollow = (platform) => {
