@@ -1,7 +1,6 @@
 import requests
 import csv
 from dotenv import load_dotenv
-#import os
 import sys
 import os
 
@@ -21,7 +20,7 @@ def get_subscribers_list_from_csv(csv_file_path):
         reader = csv.DictReader(file)
         
         # Extract and return the Subscribers Count as a list
-        return [row["Username"] for row in reader]
+        return [row["Username"][1:] for row in reader]
 
 
 def google_search(query):
@@ -45,10 +44,10 @@ def google_search(query):
         return f"Error: {response.status_code} - {response.text}"
     
 
-csv_file_path = './top_tiktokers.csv'
+csv_file_path = './TikTok_data.csv'
 subscribers_list = get_subscribers_list_from_csv(csv_file_path)
 
-current_list = subscribers_list[1:10] # PROGRESSIVELY CHANGE
+current_list = subscribers_list[249:250] # PROGRESSIVELY CHANGE !!!!!!!!!
 print(current_list)
 
 for tiktok_username in current_list:
