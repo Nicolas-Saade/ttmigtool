@@ -10,6 +10,6 @@ myenv/
 /requirements.txt
 /watchman/
 venv/
-/Backend/.env
+/BackEnd/.env
 
 
