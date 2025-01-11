@@ -11,3 +11,6 @@ myenv/
 requirements.txt
 watchman/
 venv/
+BackEnd/Database/top_tiktokers.csv
+BackEnd/.env
+
