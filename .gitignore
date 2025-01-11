@@ -1,14 +1,13 @@
-node_modules/
+/FrontEnd/node_modules/
 .DS_Store
-BackEnd/.DS_Store
+/BackEnd/.DS_Store
 *.pyc
 __pycache__/
 *.env
-BackEnd/.env
-BackEnd/config/
-venv/
-requirements.txt
-myenv/
-BackEnd/Database/top_tiktokers.csv
-BackEnd/.env
+/BackEnd/.env
+/BackEnd/config/
+/venv/
+/requirements.txt
+/myenv/
+
 
