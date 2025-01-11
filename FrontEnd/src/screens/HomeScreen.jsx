@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-//import axios from 'axios';
+import axios from 'axios';
 import { 
   View, 
   Text, 
@@ -21,6 +21,12 @@ const App = ( {/*route,*/ navigation} ) => {
   const [accountName, setAccountName] = useState('Guest');
   const [profiles, setProfiles] = useState([]);
   const [navbarHeight, setNavbarHeight] = useState(0);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+
   const [showRegisterModal, setShowRegisterModal] = useState(false); // State for registration modal
  // const [loading, setLoading] = useState(true);
 
@@ -62,7 +68,8 @@ const App = ( {/*route,*/ navigation} ) => {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    setAccountName('Nicolas Saade');
+    //setAccountName('Nicolas Saade');
+    setAccountName('Guest');
   };
 
   const handleFileSelect = async () => {
@@ -79,6 +86,52 @@ const App = ( {/*route,*/ navigation} ) => {
       }
     }
   };
+
+  //hanlde account registration
+  const handleRegister = async (firstName, lastName, email, password, file) => {
+    try {
+      const formData = new FormData();
+      formData.append('first_name', firstName);
+      formData.append('last_name', lastName);
+      formData.append('email', email);
+      formData.append('password', password);
+  
+      if (file) {
+        formData.append('json_file', {
+          uri: file.uri,
+          name: file.name,
+          type: file.type,
+        });
+      }
+  
+      const response = await api.post('/api/create-user-profile/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+  
+      if (response.status === 201) {
+        Alert.alert('Success', 'Account created successfully!');
+        setShowRegisterModal(false); // Close the modal
+        setIsLoggedIn(true); // Mark user as logged in
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setPassword('');
+        setAccountName(firstName+ ' ' + lastName); // Optionally set the user's name
+        setEmail(email);
+      } else {
+        Alert.alert('Error', 'Unexpected response from the server.');
+      }
+    } catch (error) {
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        Alert.alert('Error', error.response.data.error || 'Failed to create account.');
+      } else {
+        console.error('Error:', error.message);
+        Alert.alert('Error', 'A network error occurred. Please try again.');
+      }
+    }
+  };
+  
 
   // PlaceHolder for file drop
   const handleFileDrop = async () => {
@@ -218,11 +271,15 @@ const App = ( {/*route,*/ navigation} ) => {
           }}
         >
           <View style={styles.footerLeft}>
-            <TouchableOpacity onPress={isLoggedIn ? handleLogout : handleLogin}>
-              <Text style={styles.footerText}>
-                {isLoggedIn ? 'Logout' : 'Login'}
-              </Text>
-            </TouchableOpacity>
+            {isLoggedIn ? (
+              <TouchableOpacity onPress={handleLogout}>
+                <Text style={styles.footerText}>Sign Out</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={handleLogin}>
+                <Text style={styles.footerText}>Login</Text>
+              </TouchableOpacity>
+            )}
           </View>
           <View style={styles.footerCenter}>
             <Text style={styles.footerText}>{accountName}</Text>
@@ -233,6 +290,7 @@ const App = ( {/*route,*/ navigation} ) => {
             </TouchableOpacity>
           </View>
         </Animated.View>
+
         <Modal
           visible={showLoginModal}
           animationType="slide"
@@ -297,24 +355,33 @@ const App = ( {/*route,*/ navigation} ) => {
               <TextInput
                 style={styles.input}
                 placeholder="First Name"
+                value={firstName}
+                onChangeText={setFirstName} // Update state
                 autoCapitalize="words"
               />
               <TextInput
                 style={styles.input}
                 placeholder="Last Name"
+                value={lastName}
+                onChangeText={setLastName} // Update state
                 autoCapitalize="words"
               />
               <TextInput
                 style={styles.input}
                 placeholder="Email Address"
+                value={email}
+                onChangeText={setEmail} // Update state
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
+                value={password}
+                onChangeText={setPassword} // Update state
                 secureTextEntry
               />
+
               
               {/* Buttons Row */}
               <View style={styles.buttonsRow}>
@@ -326,7 +393,7 @@ const App = ( {/*route,*/ navigation} ) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.registerButton}
-                  onPress={() => Alert.alert('Register pressed')}
+                  onPress={() => handleRegister(firstName, lastName, email, password)}
                 >
                   <Text style={styles.registerButtonText}>Register</Text>
                 </TouchableOpacity>
