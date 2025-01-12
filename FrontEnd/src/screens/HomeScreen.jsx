@@ -31,8 +31,11 @@ const App = ( {/*route,*/ navigation} ) => {
  // const [loading, setLoading] = useState(true);
 
   const [showLoginModal, setShowLoginModal] = useState(false);
+<<<<<<< HEAD
 
   //const [showLoginModal, setShowLoginModal] = useState(false);
+=======
+>>>>>>> 6fe1abcf48f8f8152958fc6b5271841021a886d2
 
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
@@ -110,7 +113,67 @@ const App = ( {/*route,*/ navigation} ) => {
             Alert.alert('Error', 'An unexpected error occurred. Please try again.');
         }
     }
+<<<<<<< HEAD
+=======
   };
+
+  const processFollowingFromJson = async (jsonFile) => {
+    try {
+        if (!jsonFile || Object.keys(jsonFile).length === 0) {
+            Alert.alert('Notice', 'The JSON file is empty or invalid.');
+            return;
+        }
+
+        const profile = jsonFile.Profile || {};
+        const followingList = profile["Following List"]?.Following || [];
+
+        if (followingList.length === 0) {
+            //Alert.alert('Notice', 'No "following" data found in your JSON file.');
+            return;
+        }
+
+        console.log('Following List:', followingList);
+
+        const prof = followingList.map(profile => {
+            if (profile.UserName) {
+                return profile.UserName;
+            } else {
+                console.warn('Invalid following entry, missing UserName:', profile);
+                return null;
+            }
+        }).filter(Boolean); // Remove null values
+
+        if (prof.length === 0) {
+            Alert.alert('Notice', 'No valid usernames found in the following list.');
+            return;
+        }
+
+        console.log('Usernames to map:', prof);
+
+        // Fetch mapped profiles
+        const mappedProfilesResponse = await api.post(
+            '/api/profile-mapping/',
+            { prof },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
+        console.log('Mapped Profiles:', mappedProfiles);
+
+        setProfiles([...mappedProfiles]);
+
+        Alert.alert('Success', 'Profiles successfully mapped from your data!');
+    } catch (error) {
+        console.error('Profile processing error:', error.message);
+        Alert.alert('Error', 'Failed to process profiles.');
+    }
+>>>>>>> 6fe1abcf48f8f8152958fc6b5271841021a886d2
+  };
+  
 
   const processFollowingFromJson = async (jsonFile) => {
     try {
@@ -248,6 +311,7 @@ const App = ( {/*route,*/ navigation} ) => {
                 type: file.type,
                 size: file.size,
             });
+<<<<<<< HEAD
 
             const formData = new FormData();
             formData.append('file', {
@@ -271,6 +335,31 @@ const App = ( {/*route,*/ navigation} ) => {
                 },
             });
 
+=======
+
+            const formData = new FormData();
+            formData.append('file', {
+                uri: file.uri,
+                name: file.name,
+                type: file.type,
+            });
+
+            // Include user email if logged in
+            if (email) {
+                // Alert.alert('Error', 'You must be logged in to upload a file.');
+                // return;
+                formData.append('email', email);
+            }
+            
+
+            // Send the file to the backend
+            response = await api.post('/api/upload-json/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+>>>>>>> 6fe1abcf48f8f8152958fc6b5271841021a886d2
             // Check if the response is successful
             if (response?.status === 200) {
                 Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
@@ -282,6 +371,7 @@ const App = ( {/*route,*/ navigation} ) => {
         } else {
             Alert.alert('Error', 'No file was selected.');
             return;
+<<<<<<< HEAD
         }
     } catch (error) {
         console.error('File upload error:', error.message);
@@ -290,6 +380,16 @@ const App = ( {/*route,*/ navigation} ) => {
         } else {
             Alert.alert('Error', 'An unexpected error occurred.');
         }
+=======
+        }
+    } catch (error) {
+        console.error('File upload error:', error.message);
+        if (error.response) {
+            Alert.alert('Error', error.response?.data?.error || 'An unexpected error occurred.');
+        } else {
+            Alert.alert('Error', 'An unexpected error occurred.');
+        }
+>>>>>>> 6fe1abcf48f8f8152958fc6b5271841021a886d2
         return;
     }
 
@@ -313,6 +413,7 @@ const App = ( {/*route,*/ navigation} ) => {
                 Alert.alert('Error', 'No valid usernames found in the following list.');
                 return;
             }
+<<<<<<< HEAD
 
             console.log('Usernames to map:', prof);
 
@@ -327,6 +428,22 @@ const App = ( {/*route,*/ navigation} ) => {
                 }
             );
 
+=======
+
+            console.log('Usernames to map:', prof);
+
+            // Fetch mapped profiles
+            const mappedProfilesResponse = await api.post(
+                '/api/profile-mapping/',
+                { prof },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+>>>>>>> 6fe1abcf48f8f8152958fc6b5271841021a886d2
             const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
             console.log('Mapped Profiles:', mappedProfiles);
 
