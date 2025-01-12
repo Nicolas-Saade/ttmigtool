@@ -9,4 +9,6 @@ __pycache__/
 /BackEnd/config/
 /venv/
 /requirements.txt
-/myenv/
+/myenv/watchman/
+myenv/
+watchman/
