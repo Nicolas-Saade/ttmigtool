@@ -4,13 +4,9 @@
 *.pyc
 __pycache__/
 *.env
-/BackEnd/config/
-
-myenv/
-/requirements.txt
-/watchman/
-venv/
 
 /BackEnd/.env
-
-
+/BackEnd/config/
+/venv/
+/requirements.txt
+/myenv/
