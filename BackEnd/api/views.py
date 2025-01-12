@@ -1,36 +1,117 @@
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, JSONParser
+from .serializers import UserProfileSerializer
 from SupaBaseClient import supabase
 import json
+
+
+@api_view(['POST'])
+def check_email(request):
+    """API to check if an email exists in the database and return user details."""
+    email = request.data.get('email')
+    if not email:
+        return Response({"error": "Email is required."}, status=400)
+
+    try:
+        # Query the database for the email
+        response = supabase.table("user_profile").select("*").eq("email", email).execute()
+        if response.data:
+            user = response.data[0]
+            return Response({
+                "message": "Email exists.",
+                "first_name": user.get("first_name"),
+                "last_name": user.get("last_name"),
+                "password": user.get("password"),  # Include the stored password
+                "json_file": user.get("json_file"),  # Include the JSON file
+            }, status=200)
+        else:
+            return Response({"error": "Email not found."}, status=404)
+    except Exception as e:
+        return Response({"error": f"An error occurred: {str(e)}"}, status=500)  
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser])  # Enable file upload and parsing
 def upload_json_file(request):
-    """API to handle JSON file upload and extract 'following' list."""
+    """API to handle JSON file upload and optionally associate it with a user's email."""
+    # Get the user's email from the request (optional)
+    user_email = request.data.get('email')
+
     uploaded_file = request.FILES.get('file', None)
     if not uploaded_file:
-        return Response({"error": "No file provided."}, status=400)
+        return Response({"error": " file provided."}, status=400)
 
     try:
+        # Read and parse the uploaded JSON file
         file_data = uploaded_file.read().decode('utf-8')
         json_data = json.loads(file_data)
 
         # Extract "following" list from the JSON (if present)
         profile = json_data.get("Profile", {})
+        following_list = profile.get("Following List", {}).get("Following", [])
 
-        following_list = profile.get("Following List", {})
-        if not following_list:
-            return Response({"error": "No 'Following List' found in the JSON file."}, status=400)
-
-        following_list = following_list.get("Following", [])
         if not following_list:
             return Response({"error": "No 'Following' found in the JSON file."}, status=400)
 
-        return Response({"following": following_list}, status=200)
+        # If user_email is provided, associate the JSON file with the user's database entry
+        if user_email:
+            response = supabase.table("user_profile").select("*").eq("email", user_email).execute()
+            if not response.data:
+                return Response({"error": "User not found."}, status=404)
+
+            # Update the user's database entry with the JSON file
+            update_response = supabase.table("user_profile").update({"json_file": json_data}).eq("email", user_email).execute()
+
+            if not update_response.data:
+                return Response({"error": "Failed to update the database entry for the user."}, status=500)
+
+            return Response({
+                "message": "JSON file successfully uploaded and associated with the user.",
+                "following": following_list
+            }, status=200)
+
+        # If no email is provided, process the file but don't save it to the database
+        return Response({
+            "message": "JSON file successfully uploaded but not associated with any user (not logged in).",
+            "following": following_list
+        }, status=200)
 
     except json.JSONDecodeError:
         return Response({"error": "Invalid JSON file."}, status=400)
+    except Exception as e:
+        return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+
+
+#API to create a new user profile in the database.
+@api_view(['POST'])
+def create_user_profile(request):
+    """
+    API to create a new user profile in the Supabase database.
+    """
+    # Extract data from the request
+    email = request.data.get("email")
+    password = request.data.get("password")
+    first_name = request.data.get("first_name")
+    last_name = request.data.get("last_name")
+    json_file = request.data.get("json_file", {})  # Optional field
+
+    if not email or not password or not first_name or not last_name:
+        return Response({"error": "Missing required fields."}, status=400)
+
+    try:
+        response = supabase.table("user_profile").insert({
+            "email": email,
+            "password": password,
+            "first_name": first_name,
+            "last_name": last_name,
+            "json_file": json_file,
+        }).execute()
+
+        return Response({"message": "User profile created successfully!"}, status=201)
+    except Exception as e:
+        return Response({"error": f"Failed to create user profile: {str(e)}"}, status=500)
+
+
 
 @api_view(['POST'])
 def get_profile_mappings(request):
