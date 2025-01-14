@@ -25,7 +25,9 @@ export default defineConfig({
       resolveExtensions: extensions,
       loader: { '.js': 'jsx' },
     },
-    exclude: ['react-native-document-picker'], // Exclude from dependency optimization
+    exclude: ['react-native-document-picker'
+  
+    ], // Exclude from dependency optimization
   },
   resolve: {
     alias: {
