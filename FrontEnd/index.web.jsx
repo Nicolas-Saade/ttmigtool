@@ -1,13 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App'; // Make sure this points to your `App.jsx` file
+import App from './App'; // Ensure this points to your main App component
 
-// Find the root div in `index.html`
+console.log("YABADABADOUUUU")
 const rootElement = document.getElementById('root');
-
-// Render the App component
 if (rootElement) {
-  const root = createRoot(rootElement);
+  console.log('Root element found');
+  const root = createRoot(rootElement); // React 18 way to create a root
   root.render(<App />);
 } else {
   console.error('Root element not found');

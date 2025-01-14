@@ -8,13 +8,13 @@ import {
   Alert, 
   Animated,
 } from 'react-native';
-import DocumentPicker from 'react-native-document-picker';
 import { SafeAreaView } from 'react-native';
 import { Modal, TextInput } from 'react-native';
 //import RNFS from 'react-native-fs';
 import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
 import { api } from '../utils';
+import { filePicker } from '../utils/filePicker'; // Import the utility function
 
 const App = ( {/*route,*/ navigation} ) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -177,16 +177,37 @@ const App = ( {/*route,*/ navigation} ) => {
   };
 
   const handleFileSelect = async () => {
-    try {
-      const results = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles], // TODO check what do with input validation
+    if (Platform.OS === 'web') {
+      // Web-specific file picker using the File API
+      return new Promise((resolve, reject) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '*'; // Allow all file types (you can restrict if needed)
+        input.onchange = (event) => {
+          const files = event.target.files;
+          if (files && files.length > 0) {
+            resolve(files[0]); // Resolve with the selected file
+          } else {
+            reject(new Error('No file selected'));
+          }
+        };
+        input.onerror = (error) => reject(error);
+        input.click(); // Trigger the file picker dialog
       });
-      return results[0];
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        // User canceled the picker --> no action needed
-      } else {
-        Alert.alert('Something went wrong with file picking', err.message);
+    } else {
+      // Native-specific file picker using react-native-document-picker
+      const DocumentPicker = await import('react-native-document-picker'); // Dynamically import
+      try {
+        const results = await DocumentPicker.pick({
+          type: [DocumentPicker.types.allFiles], // Adjust file type validation if needed
+        });
+        return results[0]; // Return the first selected file
+      } catch (err) {
+        if (DocumentPicker.isCancel(err)) {
+          // User canceled the picker --> no action needed
+        } else {
+          Alert.alert('Something went wrong with file picking', err.message);
+        }
       }
     }
   };
