@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native';
 import { Modal, TextInput } from 'react-native';
 //import RNFS from 'react-native-fs';
-import ModalDropdown from 'react-native-modal-dropdown';
+// import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
 import { api } from '../utils';
 import { filePicker } from '../utils/filePicker'; // Import the utility function
@@ -375,15 +375,14 @@ const App = ( {/*route,*/ navigation} ) => {
   };
 
   const BulkFollowDropdown = ({ onSelectPlatform }) => (
-    <ModalDropdown
-      options={['Twitter', 'Facebook', 'Instagram']}
-      dropdownStyle={styles.dropdown}
-      onSelect={(index, value) => onSelectPlatform(value)}
-    >
+    // <ModalDropdown
+    //   options={['Twitter', 'Facebook', 'Instagram']}
+    //   dropdownStyle={styles.dropdown}
+    //   onSelect={(index, value) => onSelectPlatform(value)}
+    // >
       <TouchableOpacity style={styles.bulkFollowButton}>
         <Text style={styles.bulkFollowText}>Bulk Follow</Text>
       </TouchableOpacity>
-    </ModalDropdown>
   );
 
   return (
