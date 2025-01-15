@@ -44,10 +44,10 @@ def google_search(query):
         return f"Error: {response.status_code} - {response.text}"
     
 
-csv_file_path = './TikTok_data.csv'
+csv_file_path = './Top2000_USA.csv'
 subscribers_list = get_subscribers_list_from_csv(csv_file_path)
 
-current_list = subscribers_list[249:250] # PROGRESSIVELY CHANGE !!!!!!!!!
+current_list = subscribers_list[919:934] # PROGRESSIVELY CHANGE !!!!!!!!!
 print(current_list)
 
 for tiktok_username in current_list:
