@@ -75,29 +75,21 @@ const App = ( {/*route,*/ navigation} ) => {
 
     try {
         // Send API request to check if email exists in the database
-        const response = await api.post('/api/check-email/', { email: emailInput });
+        const response = await api.post('/api/check-email/', { email: emailInput, password: passwordInput });
 
         if (response.status === 200) {
             const user = response.data;
-            const storedPassword = user.password; // Assuming the API returns the password
             
-            if (storedPassword === passwordInput) {
-                // Password matches, allow the user to sign in
-                Alert.alert('Success', 'Login successful!');
-                setIsLoggedIn(true); // Set user as logged in
-                setAccountName(`${user.first_name} ${user.last_name}`); // Update account name
-                setShowLoginModal(false); // Close the login modal
-                setPassword(''); // Clear the password field
+            Alert.alert('Success', 'Login successful!');
+            setIsLoggedIn(true); // Set user as logged in
+            setAccountName(`${user.first_name} ${user.last_name}`); // Update account name
+            setShowLoginModal(false); // Close the login modal
+            setPassword(''); // Clear the password field
 
-                // Fetch and display the following list if the JSON file exists and is not empty
-                if (user.json_file && Object.keys(user.json_file).length > 0) {
-                    processFollowingFromJson(user.json_file);
-                } 
-            } else {
-                // Password does not match
-                Alert.alert('Error', 'Incorrect password. Please try again.');
-                setPassword(''); // Clear the password field
-            }
+            // Fetch and display the following list if the JSON file exists and is not empty
+            if (user.json_file && Object.keys(user.json_file).length > 0) {
+                processFollowingFromJson(user.json_file);
+            } 
         } else {
             Alert.alert('Error', 'Unexpected response from the server.');
         }
@@ -107,7 +99,7 @@ const App = ( {/*route,*/ navigation} ) => {
             Alert.alert('Error', 'Email not found. Please register first.');
         } else {
             console.error('Error checking email:', error.message);
-            Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+            Alert.alert('Error', 'An unexpected error occurred. Please try again.'+ error.message);
         }
     }
   };
@@ -128,7 +120,7 @@ const App = ( {/*route,*/ navigation} ) => {
             return;
         }
 
-        console.log('Following List:', followingList);
+        // console.log('Following List:', followingList);
 
         const prof = followingList.map(profile => {
             if (profile.UserName) {
@@ -158,7 +150,7 @@ const App = ( {/*route,*/ navigation} ) => {
         );
 
         const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
-        console.log('Mapped Profiles:', mappedProfiles);
+        // console.log('Mapped Profiles:', mappedProfiles);
 
         setProfiles([...mappedProfiles]);
 
@@ -299,7 +291,7 @@ const App = ( {/*route,*/ navigation} ) => {
         const { following } = response?.data || {};
 
         if (following && Array.isArray(following)) {
-            console.log('Following List:', following);
+            // console.log('Following List:', following);
 
             const prof = following.map(profile => {
                 if (profile.UserName) {
@@ -315,7 +307,7 @@ const App = ( {/*route,*/ navigation} ) => {
                 return;
             }
 
-            console.log('Usernames to map:', prof);
+            // console.log('Usernames to map:', prof);
 
             // Fetch mapped profiles
             const mappedProfilesResponse = await api.post(
@@ -329,7 +321,7 @@ const App = ( {/*route,*/ navigation} ) => {
             );
 
             const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
-            console.log('Mapped Profiles:', mappedProfiles);
+            // console.log('Mapped Profiles:', mappedProfiles);
 
             setProfiles([...mappedProfiles]);
 
