@@ -12,3 +12,4 @@ BackEnd/.env
 /requirements.txt
 /myenv/
 node_modules/
+/BackEnd/staticfiles
