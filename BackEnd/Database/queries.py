@@ -47,7 +47,7 @@ def google_search(query):
 csv_file_path = './Top2000_USA.csv'
 subscribers_list = get_subscribers_list_from_csv(csv_file_path)
 
-current_list = subscribers_list[533:566] # PROGRESSIVELY CHANGE !!!!!!!!! 468 is missing!!!!
+current_list = subscribers_list[933:966] # PROGRESSIVELY CHANGE !!!!!!!!! 468 is missing, midastouchart, mar.milne!!!!
 print(current_list)
 
 for tiktok_username in current_list:
