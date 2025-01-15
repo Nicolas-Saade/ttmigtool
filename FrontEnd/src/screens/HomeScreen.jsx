@@ -485,7 +485,7 @@ const App = ( {/*route,*/ navigation} ) => {
               <View key={index} style={styles.profileWrapper}>
                 <ProfileBox 
                   name={profile.UserName}
-                  profilePicture={profile.profile_picture}
+                  profilePicture= {profile.profile_picture}
                   instagramUrl={profile.instagram_url}
                   facebookUrl={profile.facebook_url}
                   twitterUrl={profile.twitter_url}

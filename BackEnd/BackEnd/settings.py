@@ -14,7 +14,8 @@ from pathlib import Path
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "../../FrontEnd"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -40,6 +41,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # Additional directories where static files are stored during development
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),  # Example: BASE_DIR/static
+    # os.path.join(FRONTEND_DIR, "src/assets"),  # Example: FrontEnd/src/static
+    os.path.join(FRONTEND_DIR, "dist"),  # dist folder into django
 ]
 
 # Media files (Uploaded by users)
@@ -75,10 +78,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'BackEnd.urls'
 
+DIST_DIR = os.path.join(FRONTEND_DIR, "dist")
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [DIST_DIR],  # FrontEnd/dist
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
