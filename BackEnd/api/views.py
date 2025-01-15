@@ -4,7 +4,10 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from .serializers import UserProfileSerializer
 from SupaBaseClient import supabase
 import json
+from django.shortcuts import render
 
+def index_view(request):
+    return render(request, "index.html")
 
 @api_view(['POST'])
 def check_email(request):

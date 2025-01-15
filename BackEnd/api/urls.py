@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import upload_json_file, get_profile_mappings, create_user_profile, check_email  # Added endpoint
+from .views import upload_json_file, get_profile_mappings, create_user_profile, check_email, index_view# Added endpoint
 
 urlpatterns = [
         path('upload-json/', upload_json_file, name='upload_json_file'),
