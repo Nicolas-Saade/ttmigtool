@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { Platform} from 'react-native';
 import { 
   View, 
   Text, 
@@ -7,6 +7,7 @@ import {
   TouchableOpacity, 
   Alert, 
   Animated,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native';
 import { Modal, TextInput } from 'react-native';
@@ -14,7 +15,14 @@ import { Modal, TextInput } from 'react-native';
 // import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
 import { api } from '../utils';
-import { filePicker } from '../utils/filePicker'; // Import the utility function
+import { useDropzone } from 'react-dropzone';
+import { createRoot } from 'react-dom/client';
+
+const screenWidth = Dimensions.get('window').width;
+const boxWidth = 150; // Set your desired profile box width
+const margin = 10; // Spacing between boxes
+const columns = Math.floor(screenWidth / (boxWidth + margin * 2));
+const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const App = ( {/*route,*/ navigation} ) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -25,7 +33,6 @@ const App = ( {/*route,*/ navigation} ) => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
 
   const [showRegisterModal, setShowRegisterModal] = useState(false); // State for registration modal
  // const [loading, setLoading] = useState(true);
@@ -178,22 +185,85 @@ const App = ( {/*route,*/ navigation} ) => {
 
   const handleFileSelect = async () => {
     if (Platform.OS === 'web') {
-      // Web-specific file picker using the File API
       return new Promise((resolve, reject) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '*'; // Allow all file types (you can restrict if needed)
-        input.onchange = (event) => {
-          const files = event.target.files;
-          if (files && files.length > 0) {
-            resolve(files[0]); // Resolve with the selected file
-          } else {
-            reject(new Error('No file selected'));
-          }
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+
+        const root = createRoot(container);
+
+        const handleClose = () => {
+            root.unmount(); // unmount the React tree
+            container.remove(); // Remove container from the DOM
         };
-        input.onerror = (error) => reject(error);
-        input.click(); // Trigger the file picker dialog
-      });
+
+        const DropzoneComponent = () => {
+            const onDrop = (acceptedFiles) => {
+                if (acceptedFiles.length > 0) {
+                    resolve(acceptedFiles[0]); // Resolve with the selected file
+                    handleClose(); // Cleanup the modal
+                } else {
+                    reject(new Error('No file selected'));
+                    handleClose();
+                }
+            };
+
+            const { getRootProps, getInputProps, isDragActive } = useDropzone({
+                onDrop,
+                accept: '.json', // Accept only JSON files
+                maxFiles: 1, // Single file
+            });
+
+            return (
+                <div
+                    {...getRootProps()}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 1000,
+                    }}
+                >
+                    <div
+                        style={{
+                            backgroundColor: '#fff',
+                            padding: '20px',
+                            borderRadius: '8px',
+                            textAlign: 'center',
+                        }}
+                    >
+                        <input {...getInputProps()} />
+                        {isDragActive ? (
+                            <p>Drop the file here...</p>
+                        ) : (
+                            <p>Drag & drop a JSON file here, or click to select one</p>
+                        )}
+                        <button
+                            onClick={handleClose}
+                            style={{
+                                marginTop: '10px',
+                                padding: '10px 20px',
+                                backgroundColor: '#f44336',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        root.render(<DropzoneComponent />);
+    });
     } else {
       // Native-specific file picker using react-native-document-picker
       const DocumentPicker = await import('react-native-document-picker'); // Dynamically import
@@ -272,11 +342,17 @@ const App = ( {/*route,*/ navigation} ) => {
             });
 
             const formData = new FormData();
-            formData.append('file', {
-                uri: file.uri,
-                name: file.name,
-                type: file.type,
-            });
+
+            if (Platform.OS === 'web') {
+              formData.append('file', file);
+            }
+            else {
+              formData.append('file', {
+                  uri: file.uri,
+                  name: file.name,
+                  type: file.type,
+              });
+            }
 
             // Include user email if logged in
             if (email) {
@@ -285,13 +361,11 @@ const App = ( {/*route,*/ navigation} ) => {
                 formData.append('email', email);
             }
             
-
-            // Send the file to the backend
             response = await api.post('/api/upload-json/', formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
+                    'Content-Type': 'multipart/form-data'
                 },
-            });
+            })
 
             // Check if the response is successful
             if (response?.status === 200) {
@@ -621,8 +695,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   profileWrapper: {
-    width: '48%',
+    flexBasis: isMobile ? '48%' : `${100 / columns}%`,
+    marginBottom: isMobile ? 3 : 10,
+    paddingHorizontal: isMobile ? 2 : 8,
   },
+
   // Footer styles
   footer: {
     flexDirection: 'row',
