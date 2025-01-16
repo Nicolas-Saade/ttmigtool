@@ -1,28 +1,19 @@
-import React, { useState } from 'react';
-import { Platform} from 'react-native';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Alert, 
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
   Animated,
-  Dimensions,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native';
 import { Modal, TextInput } from 'react-native';
 //import RNFS from 'react-native-fs';
-// import ModalDropdown from 'react-native-modal-dropdown';
+import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
 import { api } from '../utils';
-import { useDropzone } from 'react-dropzone';
-import { createRoot } from 'react-dom/client';
-
-const screenWidth = Dimensions.get('window').width;
-const boxWidth = 150; // Set your desired profile box width
-const margin = 10; // Spacing between boxes
-const columns = Math.floor(screenWidth / (boxWidth + margin * 2));
-const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const App = ({/*route,*/ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -37,11 +28,14 @@ const App = ({/*route,*/ navigation }) => {
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
   const [creatorForm, setCreatorForm] = useState({
+    profilePicture: '',
     tiktokUsername: '',
     instagramURL: '',
     xURL: '',
     facebookURL: '',
   });
+  const [token, setToken] = useState(''); // State for the random token in Creator Form
+
 
   const [showRegisterModal, setShowRegisterModal] = useState(false); // State for registration modal
   // const [loading, setLoading] = useState(true);
@@ -193,100 +187,16 @@ const App = ({/*route,*/ navigation }) => {
   };
 
   const handleFileSelect = async () => {
-    if (Platform.OS === 'web') {
-      return new Promise((resolve, reject) => {
-        const container = document.createElement('div');
-        document.body.appendChild(container);
-
-        const root = createRoot(container);
-
-        const handleClose = () => {
-            root.unmount(); // unmount the React tree
-            container.remove(); // Remove container from the DOM
-        };
-
-        const DropzoneComponent = () => {
-            const onDrop = (acceptedFiles) => {
-                if (acceptedFiles.length > 0) {
-                    resolve(acceptedFiles[0]); // Resolve with the selected file
-                    handleClose(); // Cleanup the modal
-                } else {
-                    reject(new Error('No file selected'));
-                    handleClose();
-                }
-            };
-
-            const { getRootProps, getInputProps, isDragActive } = useDropzone({
-                onDrop,
-                accept: '.json', // Accept only JSON files
-                maxFiles: 1, // Single file
-            });
-
-            return (
-                <div
-                    {...getRootProps()}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        zIndex: 1000,
-                    }}
-                >
-                    <div
-                        style={{
-                            backgroundColor: '#fff',
-                            padding: '20px',
-                            borderRadius: '8px',
-                            textAlign: 'center',
-                        }}
-                    >
-                        <input {...getInputProps()} />
-                        {isDragActive ? (
-                            <p>Drop the file here...</p>
-                        ) : (
-                            <p>Drag & drop a JSON file here, or click to select one</p>
-                        )}
-                        <button
-                            onClick={handleClose}
-                            style={{
-                                marginTop: '10px',
-                                padding: '10px 20px',
-                                backgroundColor: '#f44336',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        root.render(<DropzoneComponent />);
-    });
-    } else {
-      // Native-specific file picker using react-native-document-picker
-      const DocumentPicker = await import('react-native-document-picker'); // Dynamically import
-      try {
-        const results = await DocumentPicker.pick({
-          type: [DocumentPicker.types.allFiles], // Adjust file type validation if needed
-        });
-        return results[0]; // Return the first selected file
-      } catch (err) {
-        if (DocumentPicker.isCancel(err)) {
-          // User canceled the picker --> no action needed
-        } else {
-          Alert.alert('Something went wrong with file picking', err.message);
-        }
+    try {
+      const results = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles], // TODO check what do with input validation
+      });
+      return results[0];
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        // User canceled the picker --> no action needed
+      } else {
+        Alert.alert('Something went wrong with file picking', err.message);
       }
     }
   };
@@ -362,44 +272,6 @@ const App = ({/*route,*/ navigation }) => {
           // Alert.alert('Error', 'You must be logged in to upload a file.');
           // return;
           formData.append('email', email);
-            const formData = new FormData();
-
-            if (Platform.OS === 'web') {
-              formData.append('file', file);
-            }
-            else {
-              formData.append('file', {
-                  uri: file.uri,
-                  name: file.name,
-                  type: file.type,
-              });
-            }
-
-            // Include user email if logged in
-            if (email) {
-                // Alert.alert('Error', 'You must be logged in to upload a file.');
-                // return;
-                formData.append('email', email);
-            }
-            
-            response = await api.post('/api/upload-json/', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                },
-            })
-
-            // Check if the response is successful
-            if (response?.status === 200) {
-                Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
-            } else {
-                console.error('Error response:', response?.data);
-                Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
-                return;
-            }
-        } else {
-            Alert.alert('Error', 'No file was selected.');
-            return;
-
         }
 
 
@@ -491,11 +363,12 @@ const App = ({/*route,*/ navigation }) => {
     // API call or bulk follow implementation here
   };
 
-  
+
   // Creator Form Submission
   const submitCreatorData = async () => {
     try {
-      const response = await api.post('/api/creator-data/', creatorForm, {
+      const payload = { ...creatorForm, token }; // Form data + token
+      const response = await api.post('/api/creator-data/', payload, {
         headers: { 'Content-Type': 'application/json' },
       });
 
@@ -503,6 +376,7 @@ const App = ({/*route,*/ navigation }) => {
         Alert.alert('Success', 'Social Media Data Submitted!');
         setCreatorModal(false); // Close the modal
         setCreatorForm({ // Reset form state
+          profilePicture: '',
           tiktokUsername: '',
           instagramURL: '',
           xURL: '',
@@ -514,16 +388,35 @@ const App = ({/*route,*/ navigation }) => {
     }
   }
 
+  // Helper Function to generate a random string
+  const generateToken = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+';
+    let result = '';
+    for (let i = 0; i < 8; i++) { // random 8-char str
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+  };
+
+  // Generate token when Creator modal is opened
+  useEffect(() => {
+    if (creatorModal) {
+      setToken(generateToken());
+    }
+  }, [creatorModal]);
+
+
 
   const BulkFollowDropdown = ({ onSelectPlatform }) => (
-    // <ModalDropdown
-    //   options={['Twitter', 'Facebook', 'Instagram']}
-    //   dropdownStyle={styles.dropdown}
-    //   onSelect={(index, value) => onSelectPlatform(value)}
-    // >
+    <ModalDropdown
+      options={['Twitter', 'Facebook', 'Instagram']}
+      dropdownStyle={styles.dropdown}
+      onSelect={(index, value) => onSelectPlatform(value)}
+    >
       <TouchableOpacity style={styles.bulkFollowButton}>
         <Text style={styles.bulkFollowText}>Bulk Follow</Text>
       </TouchableOpacity>
+    </ModalDropdown>
   );
 
   return (
@@ -552,7 +445,7 @@ const App = ({/*route,*/ navigation }) => {
               <View key={index} style={styles.profileWrapper}>
                 <ProfileBox
                   name={profile.UserName}
-                  profilePicture= {profile.profile_picture}
+                  profilePicture={profile.profile_picture}
                   instagramUrl={profile.instagram_url}
                   facebookUrl={profile.facebook_url}
                   twitterUrl={profile.twitter_url}
@@ -729,13 +622,19 @@ const App = ({/*route,*/ navigation }) => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Social Media Details</Text>
             <Text style={styles.message}>
-              Please send the code "hi" to this TikTok Account: {' '}
+                Please send the code "<Text style={styles.token}>{token}</Text>" to this TikTok Account:{' '}
               <Text
                 style={styles.link}
                 onPress={() => Linking.openURL('https://www.tiktok.com/@example')}>
                 https://www.tiktok.com/@example
               </Text>
             </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Profile Picture URL"
+              value={creatorForm.profilePicture}
+              onChangeText={(text) => setCreatorForm((prev) => ({ ...prev, profilePicture: text }))}
+            />
             <TextInput
               style={styles.input}
               placeholder="TikTok Username"
@@ -783,8 +682,6 @@ const App = ({/*route,*/ navigation }) => {
 
     </SafeAreaView>
 
-
-
   );
 };
 
@@ -829,11 +726,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   profileWrapper: {
-    flexBasis: isMobile ? '48%' : `${100 / columns}%`,
-    marginBottom: isMobile ? 3 : 10,
-    paddingHorizontal: isMobile ? 2 : 8,
+    width: '48%',
   },
-
   // Footer styles
   footer: {
     flexDirection: 'row',
@@ -939,6 +833,10 @@ const styles = StyleSheet.create({
   link: {
     color: 'blue',
     textDecorationLine: 'underline',
+  },
+  token: {
+    fontWeight: 'bold',
+    color: '#FF5722',
   },
 });
 
