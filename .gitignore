@@ -6,7 +6,12 @@ __pycache__/
 *.env
 
 /BackEnd/.env
+BackEnd/.env
 /BackEnd/config/
 /venv/
 /requirements.txt
 /myenv/
+node_modules/
+/BackEnd/staticfiles
+BackEnd/BackEnd/db.sqlite3
+FrontEnd/dist/

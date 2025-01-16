@@ -1,22 +1,28 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
+import { Platform} from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Alert, 
   Animated,
-  Linking,
-  Button
+  Dimensions,
 } from 'react-native';
-import DocumentPicker from 'react-native-document-picker';
 import { SafeAreaView } from 'react-native';
 import { Modal, TextInput } from 'react-native';
 //import RNFS from 'react-native-fs';
-import ModalDropdown from 'react-native-modal-dropdown';
+// import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
 import { api } from '../utils';
+import { useDropzone } from 'react-dropzone';
+import { createRoot } from 'react-dom/client';
+
+const screenWidth = Dimensions.get('window').width;
+const boxWidth = 150; // Set your desired profile box width
+const margin = 10; // Spacing between boxes
+const columns = Math.floor(screenWidth / (boxWidth + margin * 2));
+const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const App = ({/*route,*/ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -28,6 +34,7 @@ const App = ({/*route,*/ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+<<<<<<< HEAD
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
   const [creatorForm, setCreatorForm] = useState({
@@ -37,6 +44,8 @@ const App = ({/*route,*/ navigation }) => {
     facebookURL: '',
   });
 
+=======
+>>>>>>> main
   const [showRegisterModal, setShowRegisterModal] = useState(false); // State for registration modal
   // const [loading, setLoading] = useState(true);
 
@@ -187,16 +196,100 @@ const App = ({/*route,*/ navigation }) => {
   };
 
   const handleFileSelect = async () => {
-    try {
-      const results = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles], // TODO check what do with input validation
-      });
-      return results[0];
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        // User canceled the picker --> no action needed
-      } else {
-        Alert.alert('Something went wrong with file picking', err.message);
+    if (Platform.OS === 'web') {
+      return new Promise((resolve, reject) => {
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+
+        const root = createRoot(container);
+
+        const handleClose = () => {
+            root.unmount(); // unmount the React tree
+            container.remove(); // Remove container from the DOM
+        };
+
+        const DropzoneComponent = () => {
+            const onDrop = (acceptedFiles) => {
+                if (acceptedFiles.length > 0) {
+                    resolve(acceptedFiles[0]); // Resolve with the selected file
+                    handleClose(); // Cleanup the modal
+                } else {
+                    reject(new Error('No file selected'));
+                    handleClose();
+                }
+            };
+
+            const { getRootProps, getInputProps, isDragActive } = useDropzone({
+                onDrop,
+                accept: '.json', // Accept only JSON files
+                maxFiles: 1, // Single file
+            });
+
+            return (
+                <div
+                    {...getRootProps()}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 1000,
+                    }}
+                >
+                    <div
+                        style={{
+                            backgroundColor: '#fff',
+                            padding: '20px',
+                            borderRadius: '8px',
+                            textAlign: 'center',
+                        }}
+                    >
+                        <input {...getInputProps()} />
+                        {isDragActive ? (
+                            <p>Drop the file here...</p>
+                        ) : (
+                            <p>Drag & drop a JSON file here, or click to select one</p>
+                        )}
+                        <button
+                            onClick={handleClose}
+                            style={{
+                                marginTop: '10px',
+                                padding: '10px 20px',
+                                backgroundColor: '#f44336',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        root.render(<DropzoneComponent />);
+    });
+    } else {
+      // Native-specific file picker using react-native-document-picker
+      const DocumentPicker = await import('react-native-document-picker'); // Dynamically import
+      try {
+        const results = await DocumentPicker.pick({
+          type: [DocumentPicker.types.allFiles], // Adjust file type validation if needed
+        });
+        return results[0]; // Return the first selected file
+      } catch (err) {
+        if (DocumentPicker.isCancel(err)) {
+          // User canceled the picker --> no action needed
+        } else {
+          Alert.alert('Something went wrong with file picking', err.message);
+        }
       }
     }
   };
@@ -260,6 +353,7 @@ const App = ({/*route,*/ navigation }) => {
           size: file.size,
         });
 
+<<<<<<< HEAD
         const formData = new FormData();
         formData.append('file', {
           uri: file.uri,
@@ -272,6 +366,45 @@ const App = ({/*route,*/ navigation }) => {
           // Alert.alert('Error', 'You must be logged in to upload a file.');
           // return;
           formData.append('email', email);
+=======
+            const formData = new FormData();
+
+            if (Platform.OS === 'web') {
+              formData.append('file', file);
+            }
+            else {
+              formData.append('file', {
+                  uri: file.uri,
+                  name: file.name,
+                  type: file.type,
+              });
+            }
+
+            // Include user email if logged in
+            if (email) {
+                // Alert.alert('Error', 'You must be logged in to upload a file.');
+                // return;
+                formData.append('email', email);
+            }
+            
+            response = await api.post('/api/upload-json/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+            })
+
+            // Check if the response is successful
+            if (response?.status === 200) {
+                Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
+            } else {
+                console.error('Error response:', response?.data);
+                Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
+                return;
+            }
+        } else {
+            Alert.alert('Error', 'No file was selected.');
+            return;
+>>>>>>> main
         }
 
 
@@ -388,15 +521,14 @@ const App = ({/*route,*/ navigation }) => {
 
 
   const BulkFollowDropdown = ({ onSelectPlatform }) => (
-    <ModalDropdown
-      options={['Twitter', 'Facebook', 'Instagram']}
-      dropdownStyle={styles.dropdown}
-      onSelect={(index, value) => onSelectPlatform(value)}
-    >
+    // <ModalDropdown
+    //   options={['Twitter', 'Facebook', 'Instagram']}
+    //   dropdownStyle={styles.dropdown}
+    //   onSelect={(index, value) => onSelectPlatform(value)}
+    // >
       <TouchableOpacity style={styles.bulkFollowButton}>
         <Text style={styles.bulkFollowText}>Bulk Follow</Text>
       </TouchableOpacity>
-    </ModalDropdown>
   );
 
   return (
@@ -425,7 +557,7 @@ const App = ({/*route,*/ navigation }) => {
               <View key={index} style={styles.profileWrapper}>
                 <ProfileBox
                   name={profile.UserName}
-                  profilePicture={profile.profile_picture}
+                  profilePicture= {profile.profile_picture}
                   instagramUrl={profile.instagram_url}
                   facebookUrl={profile.facebook_url}
                   twitterUrl={profile.twitter_url}
@@ -702,8 +834,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   profileWrapper: {
-    width: '48%',
+    flexBasis: isMobile ? '48%' : `${100 / columns}%`,
+    marginBottom: isMobile ? 3 : 10,
+    paddingHorizontal: isMobile ? 2 : 8,
   },
+
   // Footer styles
   footer: {
     flexDirection: 'row',
