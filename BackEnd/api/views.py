@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, JSONParser
 from .serializers import UserProfileSerializer
 from SupaBaseClient import supabase
+import bcrypt
 import json
 from django.shortcuts import render
 
@@ -102,9 +103,12 @@ def create_user_profile(request):
         return Response({"error": "Missing required fields."}, status=400)
 
     try:
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        hashed_password = hashed_password.decode('utf-8')
+
         response = supabase.table("user_profile").insert({
             "email": email,
-            "password": password,
+            "password": hashed_password,
             "first_name": first_name,
             "last_name": last_name,
             "json_file": json_file,
