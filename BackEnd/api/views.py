@@ -156,3 +156,35 @@ def get_profile_mappings(request):
 
     if (len(usernames) == len(result) and len(usernames) == len(mapping_arr)):
         return Response({"profiles": result}, status=200)
+    
+
+@api_view(['POST'])
+def creator_data(request):
+    """
+    API to store temporary creator data before manual check.
+    """
+    # Extract data from the request
+
+    profile_picture = request.data.get("profilePicture")
+    tiktok_username = request.data.get("tiktokUsername")
+    instagram_username = request.data.get("instagramURL")
+    x_username = request.data.get("xURL")
+    faceboook_username = request.data.get("facebookURL")
+    token = request.data.get("token")
+
+    if not tiktok_username:
+        return Response({"error": "Missing TikTok Username!"}, status=400)
+
+    try:
+        supabase.table("temporary_creators").insert({
+             "profile_picture": profile_picture,
+             "tiktok_username": tiktok_username,
+             "instagram_username": instagram_username,
+             "x_username": x_username,
+             "facebook_username": faceboook_username,
+             "token": token,
+         }).execute()
+
+        return Response({"message": "Social media data stored!"}, status=201)
+    except Exception as e:
+        return Response({"error": f"Failed to store social media data: {str(e)}"}, status=500)
