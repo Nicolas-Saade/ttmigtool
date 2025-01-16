@@ -24,6 +24,12 @@ const margin = 10; // Spacing between boxes
 const columns = Math.floor(screenWidth / (boxWidth + margin * 2));
 const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
+const screenWidth = Dimensions.get('window').width;
+const boxWidth = 150; // Set your desired profile box width
+const margin = 10; // Spacing between boxes
+const columns = Math.floor(screenWidth / (boxWidth + margin * 2));
+const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
+
 const App = ({/*route,*/ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accountName, setAccountName] = useState('Guest');
@@ -34,7 +40,6 @@ const App = ({/*route,*/ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-<<<<<<< HEAD
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
   const [creatorForm, setCreatorForm] = useState({
@@ -44,8 +49,6 @@ const App = ({/*route,*/ navigation }) => {
     facebookURL: '',
   });
 
-=======
->>>>>>> main
   const [showRegisterModal, setShowRegisterModal] = useState(false); // State for registration modal
   // const [loading, setLoading] = useState(true);
 
@@ -353,7 +356,6 @@ const App = ({/*route,*/ navigation }) => {
           size: file.size,
         });
 
-<<<<<<< HEAD
         const formData = new FormData();
         formData.append('file', {
           uri: file.uri,
@@ -366,7 +368,6 @@ const App = ({/*route,*/ navigation }) => {
           // Alert.alert('Error', 'You must be logged in to upload a file.');
           // return;
           formData.append('email', email);
-=======
             const formData = new FormData();
 
             if (Platform.OS === 'web') {
@@ -404,7 +405,7 @@ const App = ({/*route,*/ navigation }) => {
         } else {
             Alert.alert('Error', 'No file was selected.');
             return;
->>>>>>> main
+
         }
 
 
