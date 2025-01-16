@@ -1,6 +1,11 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { openUrl } from '../utils';
+import facebookIcon from '../assets/fb-emb-img.webp';
+import instagramIcon from '../assets/insta-emd-img.webp';
+import twitterIcon from '../assets/X-emb-img.png';
+import redditIcon from '../assets/reddit-emb-img.png';
+import placeHolder from '../assets/Neutral-placeholder-profile.jpg';
 
 const ProfileBox = ({ name, profilePicture, instagramUrl, facebookUrl, twitterUrl, redditUrl }) => {
   return (
@@ -8,32 +13,32 @@ const ProfileBox = ({ name, profilePicture, instagramUrl, facebookUrl, twitterUr
       <View style={styles.row}>
         {/* Profile Picture */}
         <Image 
-          source={{ uri: profilePicture || 'https://via.placeholder.com/100' }} // Placeholder for profile picture
+          source={{ uri: profilePicture || placeHolder }} // Placeholder for profile picture
           style={styles.image} 
         />
         {/* Social Media Icons */}
         <View style={styles.iconsContainer}>
           <TouchableOpacity onPress={() => openUrl(facebookUrl)}>
             <Image 
-              source={require('../assets/fb-emb-img.webp')} 
+              source={facebookIcon} 
               style={styles.icon} 
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => openUrl(instagramUrl)}>
             <Image 
-              source={require('../assets/insta-emd-img.webp')} 
+              source={instagramIcon} 
               style={styles.icon} 
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => openUrl(twitterUrl)}>
             <Image 
-              source={require('../assets/X-emb-img.png')} 
+              source={twitterIcon} 
               style={styles.icon} 
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => openUrl(redditUrl)}>
             <Image 
-              source={require('../assets/reddit-emb-img.png')} 
+              source={redditIcon} 
               style={styles.icon} 
             />
           </TouchableOpacity>
