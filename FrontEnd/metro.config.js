@@ -1,4 +1,5 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 /**
  * Metro configuration
@@ -6,6 +7,13 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
  *
  * @type {import('metro-config').MetroConfig}
  */
-const config = {};
+const defaultConfig = getDefaultConfig(__dirname);
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+const customConfig = {
+  resolver: {
+    sourceExts: ['js', 'json', 'ts', 'tsx', 'jsx'], // Extensions to process
+    blacklistRE: exclusionList([/src\/main\.jsx/]), // Ignore main.jsx inside the src/ directory
+  },
+};
+
+module.exports = mergeConfig(defaultConfig, customConfig);

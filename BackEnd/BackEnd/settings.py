@@ -30,7 +30,9 @@ DEBUG = True
 ALLOWED_HOSTS = ['10.0.2.2',
                  'localhost',
                  '127.0.0.1',
-                 '*']
+                 '*',
+                 "link-my-socials.com",
+                 "www.link-my-socials.com",]
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"  # URL to access static files
