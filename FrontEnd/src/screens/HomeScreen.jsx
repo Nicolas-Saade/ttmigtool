@@ -88,46 +88,38 @@ const App = ({/*route,*/ navigation }) => {
     const emailInput = email.trim(); // Ensure email input is trimmed
     const passwordInput = password.trim(); // Ensure password input is trimmed
     if (!emailInput || !passwordInput) {
-      Alert.alert('Error', 'Please enter both email and password.');
-      return;
+        Alert.alert('Error', 'Please enter both email and password.');
+        return;
     }
 
     try {
-      // Send API request to check if email exists in the database
-      const response = await api.post('/api/check-email/', { email: emailInput });
+        // Send API request to check if email exists in the database
+        const response = await api.post('/api/check-email/', { email: emailInput, password: passwordInput });
 
-      if (response.status === 200) {
-        const user = response.data;
-        const storedPassword = user.password; // Assuming the API returns the password
+        if (response.status === 200) {
+            const user = response.data;
+            
+            Alert.alert('Success', 'Login successful!');
+            setIsLoggedIn(true); // Set user as logged in
+            setAccountName(`${user.first_name} ${user.last_name}`); // Update account name
+            setShowLoginModal(false); // Close the login modal
+            setPassword(''); // Clear the password field
 
-        if (storedPassword === passwordInput) {
-          // Password matches, allow the user to sign in
-          Alert.alert('Success', 'Login successful!');
-          setIsLoggedIn(true); // Set user as logged in
-          setAccountName(`${user.first_name} ${user.last_name}`); // Update account name
-          setShowLoginModal(false); // Close the login modal
-          setPassword(''); // Clear the password field
-
-          // Fetch and display the following list if the JSON file exists and is not empty
-          if (user.json_file && Object.keys(user.json_file).length > 0) {
-            processFollowingFromJson(user.json_file);
-          }
+            // Fetch and display the following list if the JSON file exists and is not empty
+            if (user.json_file && Object.keys(user.json_file).length > 0) {
+                processFollowingFromJson(user.json_file);
+            } 
         } else {
-          // Password does not match
-          Alert.alert('Error', 'Incorrect password. Please try again.');
-          setPassword(''); // Clear the password field
+            Alert.alert('Error', 'Unexpected response from the server.');
         }
-      } else {
-        Alert.alert('Error', 'Unexpected response from the server.');
-      }
     } catch (error) {
-      if (error.response && error.response.status === 404) {
-        // Email not found
-        Alert.alert('Error', 'Email not found. Please register first.');
-      } else {
-        console.error('Error checking email:', error.message);
-        Alert.alert('Error', 'An unexpected error occurred. Please try again.');
-      }
+        if (error.response && error.response.status === 404) {
+            // Email not found
+            Alert.alert('Error', 'Email not found. Please register first.');
+        } else {
+            console.error('Error checking email:', error.message);
+            Alert.alert('Error', 'An unexpected error occurred. Please try again.'+ error.message);
+        }
     }
   };
 

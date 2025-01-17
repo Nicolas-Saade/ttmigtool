@@ -14,25 +14,31 @@ def index_view(request):
 def check_email(request):
     """API to check if an email exists in the database and return user details."""
     email = request.data.get('email')
-    if not email:
-        return Response({"error": "Email is required."}, status=400)
+    password = request.data.get('password')
+    if not email or not password:
+        return Response({"error": "Email and password are required."}, status=400)
 
     try:
         # Query the database for the email
         response = supabase.table("user_profile").select("*").eq("email", email).execute()
         if response.data:
             user = response.data[0]
-            return Response({
-                "message": "Email exists.",
-                "first_name": user.get("first_name"),
-                "last_name": user.get("last_name"),
-                "password": user.get("password"),  # Include the stored password
-                "json_file": user.get("json_file"),  # Include the JSON file
-            }, status=200)
+            stored_password = user.get("password")
+            if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
+
+                return Response({
+                    "message": "Email exists.",
+                    "first_name": user.get("first_name"),
+                    "last_name": user.get("last_name"),
+                    "password": user.get("password"),  # Include the stored password
+                    "json_file": user.get("json_file"),  # Include the JSON file
+                }, status=200)
+            else:
+                return Response({"error": "Incorrect password."}, status=401)
         else:
             return Response({"error": "Email not found."}, status=404)
     except Exception as e:
-        return Response({"error": f"An error occurred: {str(e)}"}, status=500)  
+        return Response({"error": f"An error occurred: {str(e)}"}, status=500)
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser])  # Enable file upload and parsing
