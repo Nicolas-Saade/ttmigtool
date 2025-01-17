@@ -13,3 +13,5 @@ BackEnd/.env
 /myenv/
 node_modules/
 /BackEnd/staticfiles
+BackEnd/BackEnd/db.sqlite3
+FrontEnd/dist/

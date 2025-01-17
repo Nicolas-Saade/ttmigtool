@@ -43,10 +43,16 @@ export default defineConfig({
     extensions: extensions,
   },
   plugins: [viteCommonjs(), react()], // Include viteCommonjs plugin
+  base: '/static/', // Base path for Django
   build: {
     commonjsOptions: {
       transformMixedEsModules: true, // Allow CommonJS and ES Modules together
     },
+    rollupOptions: {
+      external: ['react-native-document-picker'], // Exclude the library from the bundle
+      input: ['./src/main.jsx', './index.html'],
+    },
+    manifest: true, // Generates a manifest file for hashed assets
   },
   esbuild: {
     loader: 'jsx',
