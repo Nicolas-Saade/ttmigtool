@@ -94,7 +94,7 @@ const App = ({/*route,*/ navigation }) => {
 
     try {
         // Send API request to check if email exists in the database
-        const response = await api.post('/api/check-email/', { email: emailInput, password: passwordInput });
+        const response = await api.post('/api/check-email/', { email: emailInput, password: passwordInput, password: passwordInput });
 
         if (response.status === 200) {
             const user = response.data;
@@ -118,7 +118,7 @@ const App = ({/*route,*/ navigation }) => {
             Alert.alert('Error', 'Email not found. Please register first.');
         } else {
             console.error('Error checking email:', error.message);
-            Alert.alert('Error', 'An unexpected error occurred. Please try again.'+ error.message);
+            Alert.alert('Error', 'Incorrect password or Email. Please try again.');
         }
     }
   };
@@ -139,7 +139,7 @@ const App = ({/*route,*/ navigation }) => {
         return;
       }
 
-      console.log('Following List:', followingList);
+        // console.log('Following List:', followingList);
 
       const prof = followingList.map(profile => {
         if (profile.UserName) {
@@ -168,8 +168,8 @@ const App = ({/*route,*/ navigation }) => {
         }
       );
 
-      const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
-      console.log('Mapped Profiles:', mappedProfiles);
+        const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
+        // console.log('Mapped Profiles:', mappedProfiles);
 
       setProfiles([...mappedProfiles]);
 
@@ -332,111 +332,101 @@ const App = ({/*route,*/ navigation }) => {
     let response = null;
 
     try {
-      if (file) {
-        console.log('File successfully dropped and parsed:', {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-        });
-
-        const formData = new FormData();
-          if (Platform.OS === 'web') {
-            formData.append('file', file);
-          }
-          else {
-            formData.append('file', {
-                uri: file.uri,
+        if (file) {
+            console.log('File successfully dropped and parsed:', {
                 name: file.name,
                 type: file.type,
+                size: file.size,
             });
-          }
-          // Include user email if logged in
-          if (email) {
-              // Alert.alert('Error', 'You must be logged in to upload a file.');
-              // return;
-              formData.append('email', email);
-          }
-          
-          response = await api.post('/api/upload-json/', formData, {
-              headers: {
-                  'Content-Type': 'multipart/form-data'
-              },
-          })
-          // Check if the response is successful
-          if (response?.status === 200) {
-              Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
-          } else {
-              console.error('Error response:', response?.data);
-              Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
-              return;
-          }
 
-      } else {
-        Alert.alert('Error', 'No file was selected.');
-        return;
-      }
+            const formData = new FormData();
+            if (Platform.OS === 'web') {
+                formData.append('file', file);
+            } else {
+                formData.append('file', {
+                    uri: file.uri,
+                    name: file.name,
+                    type: file.type,
+                });
+            }
+
+            // Include user email if logged in
+            if (email) {
+                formData.append('email', email);
+            }
+
+            response = await api.post('/api/upload-json/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (response?.status === 200) {
+                Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
+            } else {
+                console.error('Error response:', response?.data);
+                Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
+                return;
+            }
+        } else {
+            Alert.alert('Error', 'No file was selected.');
+            return;
+        }
     } catch (error) {
-      console.error('File upload error:', error.message);
-      if (error.response) {
-        Alert.alert('Error', error.response?.data?.error || 'An unexpected error occurred.');
-      } else {
-        Alert.alert('Error', 'An unexpected error occurred.');
-      }
-      return;
+        console.error('File upload error:', error.message);
+        if (error.response) {
+            Alert.alert('Error', error.response?.data?.error || 'An unexpected error occurred.');
+        } else {
+            Alert.alert('Error', 'An unexpected error occurred.');
+        }
+        return;
     }
 
     // Process following data after a successful file upload
     try {
-      const { following } = response?.data || {};
+        const { following } = response?.data || {};
+        console.log('Following data:', following);
 
-      if (following && Array.isArray(following)) {
-        console.log('Following List:', following);
+        if (following && Array.isArray(following)) {
+            const prof = following
+                .map(profile => profile.UserName || null) // Map valid usernames or null
+                .filter(Boolean); // Remove null values
 
-        const prof = following.map(profile => {
-          if (profile.UserName) {
-            return profile.UserName;
-          } else {
-            console.warn('Invalid following entry, missing UserName:', profile);
-            return null;
-          }
-        }).filter(Boolean); // Remove null values
+            if (prof.length === 0) {
+                Alert.alert('Error', 'No valid usernames found in the following list.');
+                return;
+            }
 
-        if (prof.length === 0) {
-          Alert.alert('Error', 'No valid usernames found in the following list.');
-          return;
+            // Fetch mapped profiles
+            const mappedProfilesResponse = await api.post(
+                '/api/profile-mapping/',
+                { prof },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
+            console.log('Mapped Profiles:', mappedProfiles);
+
+            setProfiles([...mappedProfiles]);
+
+            Alert.alert('Success', 'Profiles successfully mapped!');
+        } else {
+            Alert.alert('Error', 'No "following" data found in the uploaded JSON file.');
         }
-
-        console.log('Usernames to map:', prof);
-
-        // Fetch mapped profiles
-        const mappedProfilesResponse = await api.post(
-          '/api/profile-mapping/',
-          { prof },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
-        console.log('Mapped Profiles:', mappedProfiles);
-
-        setProfiles([...mappedProfiles]);
-
-        Alert.alert('Success', 'Profiles successfully mapped!');
-      } else {
-        Alert.alert('Error', 'No "following" data found in the uploaded JSON file.');
-      }
     } catch (error) {
-      if (error instanceof SyntaxError) {
-        Alert.alert('Error', 'Failed to parse the JSON file. Ensure the file contains valid JSON.');
-      } else {
-        console.error('Profile mapping error:', error.response?.data || error.message);
-        Alert.alert('Error', 'Failed to process profiles.');
-      }
+        if (error instanceof SyntaxError) {
+            Alert.alert('Error', 'Failed to parse the JSON file. Ensure the file contains valid JSON.');
+        } else {
+            console.error('Profile mapping error:', error.response?.data || error.message);
+            Alert.alert('Error', 'Failed to process profiles.');
+        }
     }
-  };
+};
+
 
 
   const handleBulkFollow = (platform) => {

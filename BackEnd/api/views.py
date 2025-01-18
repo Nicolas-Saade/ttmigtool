@@ -4,6 +4,7 @@ from rest_framework.parsers import MultiPartParser, JSONParser
 from .serializers import UserProfileSerializer
 from SupaBaseClient import supabase
 import bcrypt
+import bcrypt
 import json
 from django.shortcuts import render
 
@@ -14,6 +15,9 @@ def index_view(request):
 def check_email(request):
     """API to check if an email exists in the database and return user details."""
     email = request.data.get('email')
+    password = request.data.get('password')
+    if not email or not password:
+        return Response({"error": "Email and password are required."}, status=400)
     password = request.data.get('password')
     if not email or not password:
         return Response({"error": "Email and password are required."}, status=400)
@@ -111,7 +115,6 @@ def create_user_profile(request):
     try:
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         hashed_password = hashed_password.decode('utf-8')
-
         response = supabase.table("user_profile").insert({
             "email": email,
             "password": hashed_password,
@@ -131,7 +134,7 @@ def get_profile_mappings(request):
     """
     API to fetch profiles with social media URLs based on usernames.
     """
-    usernames = request.data.get("prof", []) # Check the HomeScreen.jsx file @/api/profile-mapping/ axios call to check the prof array
+    usernames = request.data.get("prof", [])
 
     if not usernames or not isinstance(usernames, list):
         return Response({"error": "Invalid or missing 'usernames' list."}, status=400)
@@ -144,29 +147,32 @@ def get_profile_mappings(request):
             .execute()
         )
     except Exception as e:
-        return Response({"error": e}, status=500)
+        return Response({"error": str(e)}, status=500)
 
     if not response or not response.data:
-        return Response({"error": "No profiles found for the given usernames."}, status=404)
+        return Response({"profiles": []}, status=200)  # Return an empty list if no profiles are found
 
     mapping_arr = response.data
     if not mapping_arr or not isinstance(mapping_arr, list):
-        return Response({"error": "Invalid or missing 'mapping_arr' list."}, status=400)
+        return Response({"profiles": []}, status=200)  # Return an empty list if the data is invalid
 
     result = []
     for profile in mapping_arr:
-        result.append({
-            "UserName": profile["tiktok_username"],
-            "profile_picture": profile["profile_picture_url"],
-            "instagram_url": profile["instagram_username"],
-            "facebook_url": profile["facebook_username"],
-            "twitter_url": profile["x_username"],
-            "reddit_url": profile["reddit_username"],
-        })
+        try:
+            result.append({
+                "UserName": profile["tiktok_username"],
+                "profile_picture": profile.get("profile_picture_url", ""),
+                "instagram_url": profile.get("instagram_username", ""),
+                "facebook_url": profile.get("facebook_username", ""),
+                "twitter_url": profile.get("x_username", ""),
+                "reddit_url": profile.get("reddit_username", ""),
+            })
+        except KeyError as e:
+            # Skip profiles with missing required keys
+            continue
 
-    if (len(usernames) == len(result) and len(usernames) == len(mapping_arr)):
-        return Response({"profiles": result}, status=200)
-    
+    return Response({"profiles": result}, status=200)
+
 
 @api_view(['POST'])
 def creator_data(request):
