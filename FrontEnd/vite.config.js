@@ -19,22 +19,22 @@ const extensions = [
 export default defineConfig({
   define: {
     global: 'window', // Define `global` for compatibility with some libraries
+    __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'), // Define __DEV__ for React Native
   },
   optimizeDeps: {
     esbuildOptions: {
       resolveExtensions: extensions,
       loader: { '.js': 'jsx' },
     },
-    exclude: ['react-native-document-picker'
-  
-    ], // Exclude from dependency optimization
+    exclude: ['react-native-document-picker',
+            ], // Exclude from dependency optimization
   },
   resolve: {
     alias: {
       'react-native': path.resolve(__dirname, 'node_modules/react-native-web'),
       'react-native/Libraries/Animated/NativeAnimatedHelper':
       'react-native-web/dist/cjs/exports/Animated/NativeAnimatedHelper',
-      'react-native-reanimated': 'react-native-web-reanimated', // Reanimated for web
+      'react-native-reanimated': '/Users/nicolassaade/notcloud_project/TTmigtool/TikTok_Parser/FrontEnd/react-native-reanimated.js', // Reanimated for web
       'react-native/Libraries/TurboModule/TurboModuleRegistry': path.resolve(
         __dirname,
         'src/stubs/TurboModuleRegistry.js'
