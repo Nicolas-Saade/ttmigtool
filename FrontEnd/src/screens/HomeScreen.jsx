@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import {
   View,
@@ -17,6 +17,7 @@ import ProfileBox from '../components/ProfileBox';
 import { api } from '../utils';
 import { useDropzone } from 'react-dropzone';
 import { createRoot } from 'react-dom/client'
+import SearchBar from '../components/SearchBar';
 
 const screenWidth = Dimensions.get('window').width;
 const boxWidth = 150; // Set your desired profile box width
@@ -25,14 +26,17 @@ const columns = Math.floor(screenWidth / (boxWidth + margin * 2));
 const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const App = ({/*route,*/ navigation }) => {
+  const [allProfiles, setAllProfiles] = useState([]); // Keep the original list
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountName, setAccountName] = useState('Guest');
+  const [accountName, setAccountName] = useState('');
   const [profiles, setProfiles] = useState([]);
   const [navbarHeight, setNavbarHeight] = useState(0);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSavePopup, setShowSavePopup] = useState(false);
 
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
@@ -55,6 +59,7 @@ const App = ({/*route,*/ navigation }) => {
 
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
+  const popupOpacity = useRef(new Animated.Value(0)).current;
 
   const clampedScroll = Animated.diffClamp( // Value used for footer translation and opacity interpolation
     Animated.add(scrollAnim, offsetAnim),
@@ -73,6 +78,37 @@ const App = ({/*route,*/ navigation }) => {
     outputRange: [1, 0], // 1:Opaque-2:Transparent
     extrapolate: 'clamp',
   });
+
+  const handleShowPopup = () => {
+    setShowSavePopup(true);
+    console.log("SHOW POPUP")
+
+    // Show popup (set opacity to 1)
+    popupOpacity.setValue(1);
+
+    // Automatically hide the popup after 5 seconds
+    setTimeout(() => {
+      popupOpacity.setValue(0);
+      setShowSavePopup(false);
+    }, 12000);
+    };
+
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+
+    if (query.trim() === '') {
+      // If the search query is empty, reset to all profiles
+      setProfiles([...allProfiles]);
+    } else {
+      // Filter profiles based on the search query
+      const filteredProfiles = allProfiles.filter((profile) =>
+      profile.UserName.toLowerCase().includes(query.toLowerCase())
+    );
+      setProfiles(filteredProfiles);
+    }
+
+  };
 
   // PlaceHolder for login
   // const handleLogin = () => {
@@ -172,6 +208,7 @@ const App = ({/*route,*/ navigation }) => {
         // console.log('Mapped Profiles:', mappedProfiles);
 
       setProfiles([...mappedProfiles]);
+      setAllProfiles([...mappedProfiles]);
 
       Alert.alert('Success', 'Profiles successfully mapped from your data!');
     } catch (error) {
@@ -184,7 +221,7 @@ const App = ({/*route,*/ navigation }) => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     //setAccountName('Nicolas Saade');
-    setAccountName('Guest');
+    setAccountName('');
   };
 
   const handleFileSelect = async () => {
@@ -430,6 +467,15 @@ const App = ({/*route,*/ navigation }) => {
             console.log('Mapped Profiles:', mappedProfiles);
 
             setProfiles([...mappedProfiles]);
+            setAllProfiles([...mappedProfiles]);
+
+            console.log("IS LOGGED IN", isLoggedIn)
+            
+            if (!isLoggedIn) {
+              console.log("NOT LOGGED IN")
+              setShowSavePopup(true);
+              handleShowPopup();
+            }
 
             Alert.alert('Success', 'Profiles successfully mapped!');
         } else {
@@ -517,7 +563,17 @@ const App = ({/*route,*/ navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
-          <BulkFollowDropdown onSelectPlatform={handleBulkFollow} />
+
+          <SearchBar
+            onSearch={handleSearch}
+            placeholder="Search..."
+          />
+
+          <TouchableOpacity onPress={handleFileDrop} style={styles.bulkFollowButton}>
+            <Text style={styles.bulkFollowText}>Add TikTok file</Text> {/* Change this text */}
+          </TouchableOpacity>
+
+          {/* <BulkFollowDropdown onSelectPlatform={handleBulkFollow} /> */}
         </View>
 
         {/* Dynamic Profile Boxes */}
@@ -567,9 +623,26 @@ const App = ({/*route,*/ navigation }) => {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity onPress={handleLogin}>
-              <Text style={styles.footerText}>Login</Text>
+              <Text style={styles.footerText}>SignUp/Login</Text>
             </TouchableOpacity>
           )}
+          {/* Popup Modal */}
+
+        {/* Subtle Notification Popup */}
+        {showSavePopup && (
+          <TouchableOpacity
+            style={[styles.notificationPopup]}
+            activeOpacity={0.9} // Add a bit of feedback when clicked
+            onPress={() => {
+              popupOpacity.setValue(0);
+              console.log("HIDE POPUP");
+            }} // Dismiss the popup
+          >
+            <Text style={styles.notificationText}>
+              To save this list and your preferences, SignUp/Login, and we’ll take care of the rest!!
+            </Text>
+          </TouchableOpacity>
+        )}
         </View>
 
         <TouchableOpacity
@@ -579,9 +652,6 @@ const App = ({/*route,*/ navigation }) => {
         </TouchableOpacity>
 
         <View style={styles.footerRight}>
-          <TouchableOpacity onPress={handleFileDrop}>
-            <Text style={styles.footerText}>Attach/Drop Files</Text>
-          </TouchableOpacity>
         </View>
       </Animated.View>
 
@@ -594,6 +664,7 @@ const App = ({/*route,*/ navigation }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Login</Text>
+            <Text style = {styles.message}>With an account, we can take care of your data file, so you can focus on migrating your preferences.</Text>
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -784,7 +855,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingVertical: 6,
     backgroundColor: '#f5f5f5',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
@@ -928,6 +999,32 @@ const styles = StyleSheet.create({
   token: {
     fontWeight: 'bold',
     color: '#FF5722',
+  },
+  notificationPopup: {
+    position: 'absolute',
+    bottom: 40, // Position above the bottom edge
+    left: 20, // Margin from the left
+    right: 20, // Margin from the right
+    backgroundColor: '#FFF',
+    padding: 15, // Padding for internal spacing
+    borderRadius: 10, // Rounded corners
+    elevation: 5, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    minHeight: 110, // Ensure enough height for the content
+    minWidth: 120, // Ensure enough width for the
+    maxWidth: '90%', // Limit the width to 90% of the screen
+    flexDirection: 'row', // Align items horizontally
+    alignItems: 'center', // Vertically center the content
+    justifyContent: 'space-between', // Add spacing between text and button
+  },
+  notificationText: {
+    flex: 1, // Prevent text from shrinking
+    fontSize: 16, // Larger text size
+    color: '#333',
+    textAlign: 'left', // Left-align the text
   },
 });
 
