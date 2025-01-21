@@ -13,12 +13,12 @@ const AppNavigator = () => {
           <Stack.Screen 
             name="WelcomeScreen1" 
             component={WelcomeScreen1} 
-            options={{ title: 'Welcome' }} 
+            options={{ title: 'Link My Socials' }} 
           />
           <Stack.Screen 
             name="WelcomeScreen2" 
             component={WelcomeScreen2} 
-            options={{ title: 'Get Started' }} 
+            options={{ title: 'Tutorial' }} 
           />
           <Stack.Screen 
             name="HomeScreen" 
