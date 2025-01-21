@@ -4,21 +4,29 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 const WelcomeScreen1 = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Hello There! 👋</Text>
+      <Text style={styles.title}>Protect Your TikTok Faves!</Text>
       <Text style={styles.subtitle}>
-        This app was built during a college student's free time with love and dedication. 
-        It's here to help us stay connected and thrive together as a community. Let's keep the joy alive 
-        and support one another 💙.
+        A tool to migrate your Tiktok preferences to a new platform.
       </Text>
-      <Text style={styles.subtitle}>
-        Thank you for giving this app a try! If you love it, I won't ask you for money 
-        or a cup of coffee, but to for you to recommend it to your loved ones :).
+      <Text style={styles.note}>
+        Note from creator: I built this service with love and dedication 
+        to help us stay connected and thrive as a community in these uncertain times.
+        I’m Nicolas, a college student, and I built this during my free time to safeguard the 
+        small daily joy and personalized fun that Tiktok brings me, in case it ever gets banned.
+        I promise to keep this service free, and if you like it, 
+        please share it with your network and loved ones!
       </Text>
       <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('WelcomeScreen2')}
       >
-        <Text style={styles.buttonText}>Let's Get Started</Text>
+        <Text style={styles.buttonText}>Tutorial</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('HomeScreen')}
+      >
+        <Text style={styles.buttonText}>Migrate My Data</Text>
       </TouchableOpacity>
     </View>
   );
@@ -30,24 +38,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 30,
-    backgroundColor: '#f9f9f9', // Soft, inviting background color
+    backgroundColor: '#f9f9f9',
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-    color: '#333', // Warm, neutral color
+    color: '#333',
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 20,
     lineHeight: 28,
     textAlign: 'center',
     marginBottom: 20,
     color: '#555',
   },
+  note: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#777',
+  },
   button: {
-    backgroundColor: '#4CAF50', // Friendly green button
+    backgroundColor: '#4CAF50',
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 25,

@@ -17,6 +17,7 @@ import ProfileBox from '../components/ProfileBox';
 import { api } from '../utils';
 import { useDropzone } from 'react-dropzone';
 import { createRoot } from 'react-dom/client'
+import SearchBar from '../components/SearchBar';
 
 const screenWidth = Dimensions.get('window').width;
 const boxWidth = 150; // Set your desired profile box width
@@ -25,14 +26,16 @@ const columns = Math.floor(screenWidth / (boxWidth + margin * 2));
 const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const App = ({/*route,*/ navigation }) => {
+  const [allProfiles, setAllProfiles] = useState([]); // Keep the original list
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountName, setAccountName] = useState('Guest');
+  const [accountName, setAccountName] = useState('');
   const [profiles, setProfiles] = useState([]);
   const [navbarHeight, setNavbarHeight] = useState(0);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
@@ -73,6 +76,22 @@ const App = ({/*route,*/ navigation }) => {
     outputRange: [1, 0], // 1:Opaque-2:Transparent
     extrapolate: 'clamp',
   });
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+
+    if (query.trim() === '') {
+      // If the search query is empty, reset to all profiles
+      setProfiles([...allProfiles]);
+    } else {
+      // Filter profiles based on the search query
+      const filteredProfiles = allProfiles.filter((profile) =>
+      profile.UserName.toLowerCase().includes(query.toLowerCase())
+    );
+      setProfiles(filteredProfiles);
+    }
+
+  };
 
   // PlaceHolder for login
   // const handleLogin = () => {
@@ -172,6 +191,7 @@ const App = ({/*route,*/ navigation }) => {
         // console.log('Mapped Profiles:', mappedProfiles);
 
       setProfiles([...mappedProfiles]);
+      setAllProfiles([...mappedProfiles]);
 
       Alert.alert('Success', 'Profiles successfully mapped from your data!');
     } catch (error) {
@@ -184,7 +204,7 @@ const App = ({/*route,*/ navigation }) => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     //setAccountName('Nicolas Saade');
-    setAccountName('Guest');
+    setAccountName('');
   };
 
   const handleFileSelect = async () => {
@@ -517,7 +537,17 @@ const App = ({/*route,*/ navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
-          <BulkFollowDropdown onSelectPlatform={handleBulkFollow} />
+
+          <SearchBar
+            onSearch={handleSearch}
+            placeholder="Search..."
+          />
+
+          <TouchableOpacity onPress={handleFileDrop} style={styles.bulkFollowButton}>
+            <Text style={styles.bulkFollowText}>Attach files</Text> {/* Change this text */}
+          </TouchableOpacity>
+
+          {/* <BulkFollowDropdown onSelectPlatform={handleBulkFollow} /> */}
         </View>
 
         {/* Dynamic Profile Boxes */}
@@ -567,7 +597,7 @@ const App = ({/*route,*/ navigation }) => {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity onPress={handleLogin}>
-              <Text style={styles.footerText}>Login</Text>
+              <Text style={styles.footerText}>SignUp/Login</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -579,9 +609,6 @@ const App = ({/*route,*/ navigation }) => {
         </TouchableOpacity>
 
         <View style={styles.footerRight}>
-          <TouchableOpacity onPress={handleFileDrop}>
-            <Text style={styles.footerText}>Attach/Drop Files</Text>
-          </TouchableOpacity>
         </View>
       </Animated.View>
 
@@ -594,6 +621,7 @@ const App = ({/*route,*/ navigation }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Login</Text>
+            <Text style = {styles.message}>With an account, we can take care of your data file, so you can focus on migrating your preferences.</Text>
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -784,7 +812,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingVertical: 6,
     backgroundColor: '#f5f5f5',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',

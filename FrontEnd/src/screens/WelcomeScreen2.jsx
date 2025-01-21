@@ -10,20 +10,21 @@ const WelcomeScreen2 = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to the App! 🎉</Text>
       <Text style={styles.subtitle}>
-        Here's everything you need to get started. Choose how you'd like to learn!
+        Here's everything you need to get started:
       </Text>
 
       {/* Instructions Section */}
-      <Text style={styles.sectionTitle}>📖 Prefer to Read? Follow These Steps:</Text>
+      <Text style={styles.sectionTitle}> 4 Steps to Migrate Your Preferences:</Text>
       <View style={styles.stepsContainer}>
-        <Text style={styles.step}>1. [Step 1 placeholder]</Text>
-        <Text style={styles.step}>2. [Step 2 placeholder]</Text>
-        <Text style={styles.step}>3. [Step 3 placeholder]</Text>
-        <Text style={styles.step}>4. [Step 4 placeholder]</Text>
+        <Text style={styles.step}>1. Open your TikTok App on Profile, click the button with three straight lines (top right)</Text>
+        <Text style={styles.step}>2. Settings and Privacy → Account → Download your data</Text>
+        <Text style={styles.step}>3. Select data to download: Profiles and posts + Activity. Select File Format JSON</Text>
+        <Text style={styles.step}>4. Request Data wait a few seconds and then go to the Download Data tab, click download</Text>
+        <Text style={styles.step}>5. Go to the next page, send us your file (top right next page) and we take care of the rest.</Text>
       </View>
 
       {/* Video Tutorial Section */}
-      <Text style={styles.sectionTitle}>🎥 Prefer Watching? Check This Out:</Text>
+      <Text style={styles.sectionTitle}>🎥 Prefer Watching?</Text>
       <Text
         style={styles.link}
         onPress={() => Linking.openURL('https://example.com/tutorial')}
@@ -32,7 +33,7 @@ const WelcomeScreen2 = ({ navigation }) => {
       </Text>
 
       <TouchableOpacity style={styles.button} onPress={goToHomeScreen}>
-        <Text style={styles.buttonText}>Go to Home Page</Text>
+        <Text style={styles.buttonText}>Migrate My Data</Text>
       </TouchableOpacity>
     </View>
   );
