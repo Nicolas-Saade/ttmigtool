@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import {
   View,
@@ -36,6 +36,7 @@ const App = ({/*route,*/ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSavePopup, setShowSavePopup] = useState(false);
 
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
@@ -58,6 +59,7 @@ const App = ({/*route,*/ navigation }) => {
 
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
+  const popupOpacity = useRef(new Animated.Value(0)).current;
 
   const clampedScroll = Animated.diffClamp( // Value used for footer translation and opacity interpolation
     Animated.add(scrollAnim, offsetAnim),
@@ -76,6 +78,21 @@ const App = ({/*route,*/ navigation }) => {
     outputRange: [1, 0], // 1:Opaque-2:Transparent
     extrapolate: 'clamp',
   });
+
+  const handleShowPopup = () => {
+    setShowSavePopup(true);
+    console.log("SHOW POPUP")
+
+    // Show popup (set opacity to 1)
+    popupOpacity.setValue(1);
+
+    // Automatically hide the popup after 5 seconds
+    setTimeout(() => {
+      popupOpacity.setValue(0);
+      setShowSavePopup(false);
+    }, 12000);
+    };
+
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -450,6 +467,15 @@ const App = ({/*route,*/ navigation }) => {
             console.log('Mapped Profiles:', mappedProfiles);
 
             setProfiles([...mappedProfiles]);
+            setAllProfiles([...mappedProfiles]);
+
+            console.log("IS LOGGED IN", isLoggedIn)
+            
+            if (!isLoggedIn) {
+              console.log("NOT LOGGED IN")
+              setShowSavePopup(true);
+              handleShowPopup();
+            }
 
             Alert.alert('Success', 'Profiles successfully mapped!');
         } else {
@@ -544,7 +570,7 @@ const App = ({/*route,*/ navigation }) => {
           />
 
           <TouchableOpacity onPress={handleFileDrop} style={styles.bulkFollowButton}>
-            <Text style={styles.bulkFollowText}>Attach files</Text> {/* Change this text */}
+            <Text style={styles.bulkFollowText}>Add TikTok file</Text> {/* Change this text */}
           </TouchableOpacity>
 
           {/* <BulkFollowDropdown onSelectPlatform={handleBulkFollow} /> */}
@@ -600,6 +626,23 @@ const App = ({/*route,*/ navigation }) => {
               <Text style={styles.footerText}>SignUp/Login</Text>
             </TouchableOpacity>
           )}
+          {/* Popup Modal */}
+
+        {/* Subtle Notification Popup */}
+        {showSavePopup && (
+          <TouchableOpacity
+            style={[styles.notificationPopup]}
+            activeOpacity={0.9} // Add a bit of feedback when clicked
+            onPress={() => {
+              popupOpacity.setValue(0);
+              console.log("HIDE POPUP");
+            }} // Dismiss the popup
+          >
+            <Text style={styles.notificationText}>
+              To save this list and your preferences, SignUp/Login, and we’ll take care of the rest!!
+            </Text>
+          </TouchableOpacity>
+        )}
         </View>
 
         <TouchableOpacity
@@ -956,6 +999,32 @@ const styles = StyleSheet.create({
   token: {
     fontWeight: 'bold',
     color: '#FF5722',
+  },
+  notificationPopup: {
+    position: 'absolute',
+    bottom: 40, // Position above the bottom edge
+    left: 20, // Margin from the left
+    right: 20, // Margin from the right
+    backgroundColor: '#FFF',
+    padding: 15, // Padding for internal spacing
+    borderRadius: 10, // Rounded corners
+    elevation: 5, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    minHeight: 110, // Ensure enough height for the content
+    minWidth: 120, // Ensure enough width for the
+    maxWidth: '90%', // Limit the width to 90% of the screen
+    flexDirection: 'row', // Align items horizontally
+    alignItems: 'center', // Vertically center the content
+    justifyContent: 'space-between', // Add spacing between text and button
+  },
+  notificationText: {
+    flex: 1, // Prevent text from shrinking
+    fontSize: 16, // Larger text size
+    color: '#333',
+    textAlign: 'left', // Left-align the text
   },
 });
 
