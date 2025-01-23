@@ -100,16 +100,18 @@ const App = ({/*route,*/ navigation }) => {
   
     // Filter profiles based on the selected platforms
     const filteredProfiles = allProfiles.filter((profile) =>
-      selectedPlatforms.some((platform) => {
+      selectedPlatforms.every((platform) => {
         let normalizedPlatform = platform.toLowerCase();
 
         if (normalizedPlatform === 'x') {
           normalizedPlatform = 'twitter';
         }
 
-        return profile[`${normalizedPlatform}_url`] && 
-               profile[`${normalizedPlatform}_url`].trim() !== '' && 
-               profile[`${normalizedPlatform}_url`].trim() !== undefined;
+        return (
+          profile[`${normalizedPlatform}_url`] &&
+          profile[`${normalizedPlatform}_url`].trim() !== '' &&
+          profile[`${normalizedPlatform}_url`].trim() !== undefined
+        );
       })
     );
   
