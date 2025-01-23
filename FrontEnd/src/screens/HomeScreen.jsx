@@ -19,6 +19,7 @@ import { useDropzone } from 'react-dropzone';
 import { createRoot } from 'react-dom/client'
 import SearchBar from '../components/SearchBar';
 import AlertModal from '../components/NotLoggedInAdding';
+import FilterModal from '../components/FilterModal';
 
 const screenWidth = Dimensions.get('window').width;
 const boxWidth = 150; // Set your desired profile box width
@@ -28,6 +29,7 @@ const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const App = ({/*route,*/ navigation }) => {
   const [allProfiles, setAllProfiles] = useState([]); // Keep the original list
+  const [filterProfiles, setFilterProfiles] = useState([]); // Keep the list of mapped urls and their users
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accountName, setAccountName] = useState('');
   const [profiles, setProfiles] = useState([]);
@@ -41,7 +43,7 @@ const App = ({/*route,*/ navigation }) => {
   const [isNotificationVisible, setIsNotificationVisible] = useState(false);
   
   const [showAlertModal, setShowAlertModal] = useState(false);
-
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
 
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
@@ -84,6 +86,36 @@ const App = ({/*route,*/ navigation }) => {
     extrapolate: 'clamp',
   });
 
+  const handleFilter = () => {
+    setIsFilterModalVisible(true);
+  };
+  
+  const handleSelectPlatform = (selectedPlatforms) => {
+    console.log("Selected Platforms", selectedPlatforms);
+    if (selectedPlatforms.length === 0) {
+      // If no platforms are selected, reset to all profiles
+      setProfiles([...allProfiles]);
+      return;
+    }
+  
+    // Filter profiles based on the selected platforms
+    const filteredProfiles = allProfiles.filter((profile) =>
+      selectedPlatforms.some((platform) => {
+        let normalizedPlatform = platform.toLowerCase();
+
+        if (normalizedPlatform === 'x') {
+          normalizedPlatform = 'twitter';
+        }
+
+        return profile[`${normalizedPlatform}_url`] && 
+               profile[`${normalizedPlatform}_url`].trim() !== '' && 
+               profile[`${normalizedPlatform}_url`].trim() !== undefined;
+      })
+    );
+  
+    setProfiles(filteredProfiles);
+  };
+
   const handleShowPopup = () => {
     setShowSavePopup(true);
     setIsNotificationVisible(true); 
@@ -101,7 +133,7 @@ const App = ({/*route,*/ navigation }) => {
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-
+    console.log("checking inside of search", allProfiles, profiles);
     if (query.trim() === '') {
       // If the search query is empty, reset to all profiles
       setProfiles([...allProfiles]);
@@ -473,8 +505,6 @@ const App = ({/*route,*/ navigation }) => {
 
             setProfiles([...mappedProfiles]);
             setAllProfiles([...mappedProfiles]);
-
-            console.log("IS LOGGED IN", isLoggedIn)
             
             if (!isLoggedIn) {
               setShowSavePopup(true);
@@ -573,8 +603,21 @@ const App = ({/*route,*/ navigation }) => {
             placeholder="Search..."
           />
 
-          <TouchableOpacity onPress={handleFileDrop} style={styles.bulkFollowButton}>
-            <Text style={styles.bulkFollowText}>Add TikTok file</Text> {/* Change this text */}
+          {allProfiles.length !== 0 && (
+              <TouchableOpacity
+                onPress={handleFilter}
+                style={styles.filterButton}
+              >
+                <Text style={styles.filterButtonText}>Filter</Text>
+              </TouchableOpacity>
+            )}
+
+          <TouchableOpacity
+            onPress={handleFileDrop}
+            style={allProfiles === null ? styles.changeFileButtonSmall : styles.changeFileButton}>
+            <Text style={allProfiles.length !== 0 ? styles.changeFileTextSmall : styles.changeFileText}>
+              {allProfiles.length !== 0 ? 'Change File' : 'Add TikTok File'}
+            </Text>
           </TouchableOpacity>
 
           {/* <BulkFollowDropdown onSelectPlatform={handleBulkFollow} /> */}
@@ -863,6 +906,12 @@ const App = ({/*route,*/ navigation }) => {
         </View>
       </Modal>
 
+      <FilterModal
+        visible={isFilterModalVisible}
+        onClose={() => setIsFilterModalVisible(false)}
+        onSelectPlatform={handleSelectPlatform} // Pass handleSelectPlatform to the modal
+      />
+
     </SafeAreaView>
 
   );
@@ -887,16 +936,32 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#007bff',
   },
-  bulkFollowButton: {
-    backgroundColor: '#4CAF50',
+  changeFileButton: {
+    backgroundColor: '#4CAF50', // Original button background
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 5,
   },
-  bulkFollowText: {
-    color: '#fff',
+  
+  changeFileText: {
+    color: '#fff', // Original button text color
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  
+  changeFileButtonSmall: {
+    backgroundColor: '#ddd !important', // Light gray background for less prominence
+    paddingVertical: 6, // Smaller padding
+    paddingHorizontal: 10, // Smaller width
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc', // Subtle border
+  },
+  
+  changeFileTextSmall: {
+    color: '#555', // Subtle gray text
+    fontSize: 12, // Smaller font size
+    fontWeight: 'normal', // Normal font weight
   },
   // Profile grid styles
   profilesContainer: {
@@ -1069,6 +1134,18 @@ const styles = StyleSheet.create({
     color: '#fff', // White text color
     fontSize: 14, // Font size
     fontWeight: 'bold', // Bold font
+  },
+  filterButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  filterButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
 
