@@ -18,6 +18,7 @@ import { api } from '../utils';
 import { useDropzone } from 'react-dropzone';
 import { createRoot } from 'react-dom/client'
 import SearchBar from '../components/SearchBar';
+import AlertModal from '../components/NotLoggedInAdding';
 
 const screenWidth = Dimensions.get('window').width;
 const boxWidth = 150; // Set your desired profile box width
@@ -37,6 +38,10 @@ const App = ({/*route,*/ navigation }) => {
   const [password, setPassword] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSavePopup, setShowSavePopup] = useState(false);
+  const [isNotificationVisible, setIsNotificationVisible] = useState(false);
+  
+  const [showAlertModal, setShowAlertModal] = useState(false);
+
 
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
@@ -61,27 +66,27 @@ const App = ({/*route,*/ navigation }) => {
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
   const popupOpacity = useRef(new Animated.Value(0)).current;
 
-  const clampedScroll = Animated.diffClamp( // Value used for footer translation and opacity interpolation
+  const clampedScroll = Animated.diffClamp(
     Animated.add(scrollAnim, offsetAnim),
     0,
     navbarHeight
   );
 
   const footerTranslate = clampedScroll.interpolate({
-    inputRange: [0, navbarHeight], // UpperBounded by diffClamp
-    outputRange: [0, -navbarHeight], // Move footer up by its height (hide it)
-    extrapolate: 'clamp', // Disables extrapolation (limits the interpolation output)
+    inputRange: [0, navbarHeight],
+    outputRange: [0, isNotificationVisible ? -navbarHeight : 0], // Adjust based on notification visibility
+    extrapolate: 'clamp',
   });
 
   const footerOpacity = clampedScroll.interpolate({
     inputRange: [0, navbarHeight],
-    outputRange: [1, 0], // 1:Opaque-2:Transparent
+    outputRange: [1, 0],
     extrapolate: 'clamp',
   });
 
   const handleShowPopup = () => {
     setShowSavePopup(true);
-    console.log("SHOW POPUP")
+    setIsNotificationVisible(true); 
 
     // Show popup (set opacity to 1)
     popupOpacity.setValue(1);
@@ -472,7 +477,6 @@ const App = ({/*route,*/ navigation }) => {
             console.log("IS LOGGED IN", isLoggedIn)
             
             if (!isLoggedIn) {
-              console.log("NOT LOGGED IN")
               setShowSavePopup(true);
               handleShowPopup();
             }
@@ -635,7 +639,8 @@ const App = ({/*route,*/ navigation }) => {
             activeOpacity={0.9} // Add a bit of feedback when clicked
             onPress={() => {
               popupOpacity.setValue(0);
-              console.log("HIDE POPUP");
+              setShowSavePopup(false);
+              setIsNotificationVisible(false); // Hide notification
             }} // Dismiss the popup
           >
             <Text style={styles.notificationText}>
@@ -645,11 +650,29 @@ const App = ({/*route,*/ navigation }) => {
         )}
         </View>
 
-        <TouchableOpacity
-          style={styles.footerCenter}
-          onPress={() => setCreatorModal(true)}>
+        <TouchableOpacity style={styles.footerCenter}>
           <Text style={styles.footerText}>{accountName}</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.greenPlusButton}
+          onPress={() => {
+            if (isLoggedIn) {
+              setCreatorModal(true); // Open the Creator Modal if logged in
+            } else {
+              setShowAlertModal(true); // Show custom alert modal
+            }
+          }}
+        >
+          <Text style={styles.plusText}>+</Text>
+        </TouchableOpacity>
+          
+        <AlertModal
+          visible={showAlertModal}
+          title="Login Required"
+          message="Please log in to add your accout's credentials."
+          onClose={() => setShowAlertModal(false)} // Close modal on button press
+        />
 
         <View style={styles.footerRight}>
         </View>
@@ -1025,6 +1048,27 @@ const styles = StyleSheet.create({
     fontSize: 16, // Larger text size
     color: '#333',
     textAlign: 'left', // Left-align the text
+  },
+  greenPlusButton: {
+    backgroundColor: '#4CAF50', // Green background
+    borderRadius: 50, // Circular button
+    width: 30, // Button width
+    height: 20, // Button height
+    justifyContent: 'center', // Center content vertically
+    alignItems: 'center', // Center content horizontally
+    position: 'absolute', // Place it in a fixed position
+    right: 15, // Distance from the right edge of the footer
+    bottom: 10, // Distance from the bottom edge of the screen
+    shadowColor: '#000', // Shadow color for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset
+    shadowOpacity: 0.3, // Shadow opacity
+    shadowRadius: 5, // Shadow radius
+  },
+  
+  plusText: {
+    color: '#fff', // White text color
+    fontSize: 14, // Font size
+    fontWeight: 'bold', // Bold font
   },
 });
 

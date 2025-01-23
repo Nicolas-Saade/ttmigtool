@@ -1,11 +1,16 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { openUrl } from '../utils';
-import facebookIcon from '../assets/fb-emb-img.webp';
-import instagramIcon from '../assets/insta-emd-img.webp';
-import twitterIcon from '../assets/X-emb-img.png';
-import redditIcon from '../assets/reddit-emb-img.png';
+import facebookIcon from '../assets/Facebook-logo-reg.png'; // Regular Facebook icon
+import facebookIconPlaceholder from '../assets/facebook-logo-not.png'; // Placeholder for missing URL
+import instagramIcon from '../assets/Insta-logo-reg.png'; // Regular Instagram icon
+import instagramIconPlaceholder from '../assets/Insta-logo-not.png'; // Placeholder for missing URL
+import twitterIcon from '../assets/X-logo-reg.webp'; // Regular X (Twitter) icon
+import twitterIconPlaceholder from '../assets/X-logo-not.png'; // Placeholder for missing URL
+import redditIcon from '../assets/reddit-logo-reg.webp'; // Regular Reddit icon
+import redditIconPlaceholder from '../assets/reddit-logo-not.png'; // Placeholder for missing URL
 import placeHolder from '../assets/Neutral-placeholder-profile.jpg';
+
 
 const ProfileBox = ({ name, profilePicture, instagramUrl, facebookUrl, twitterUrl, redditUrl }) => {
   return (
@@ -18,27 +23,39 @@ const ProfileBox = ({ name, profilePicture, instagramUrl, facebookUrl, twitterUr
         />
         {/* Social Media Icons */}
         <View style={styles.iconsContainer}>
-          <TouchableOpacity onPress={() => openUrl(facebookUrl)}>
+          <TouchableOpacity 
+              onPress={() => facebookUrl && openUrl(facebookUrl)} 
+              disabled={!facebookUrl} // Disable button if URL is null
+          >
             <Image 
-              source={facebookIcon} 
+              source={facebookUrl ? facebookIcon : facebookIconPlaceholder} 
               style={styles.icon} 
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => openUrl(instagramUrl)}>
+          <TouchableOpacity 
+            onPress={() => instagramUrl && openUrl(instagramUrl)} 
+            disabled={!instagramUrl} // Disable button if URL is null
+          >
             <Image 
-              source={instagramIcon} 
+              source={instagramUrl ? instagramIcon : instagramIconPlaceholder} 
               style={styles.icon} 
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => openUrl(twitterUrl)}>
+          <TouchableOpacity 
+            onPress={() => twitterUrl && openUrl(twitterUrl)} 
+            disabled={!twitterUrl} // Disable button if URL is null
+          >
             <Image 
-              source={twitterIcon} 
+              source={twitterUrl ? twitterIcon : twitterIconPlaceholder} 
               style={styles.icon} 
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => openUrl(redditUrl)}>
+          <TouchableOpacity 
+            onPress={() => redditUrl && openUrl(redditUrl)} 
+            disabled={!redditUrl} // Disable button if URL is null
+          >
             <Image 
-              source={redditIcon} 
+              source={redditUrl ? redditIcon : redditIconPlaceholder} 
               style={styles.icon} 
             />
           </TouchableOpacity>
