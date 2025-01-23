@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native';
 import { Modal, TextInput } from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
+import CustomProfileBox from '../components/UserProfileBox';
 import { api } from '../utils';
 import { useDropzone } from 'react-dropzone';
 import { createRoot } from 'react-dom/client'
@@ -647,6 +648,26 @@ const App = ({/*route,*/ navigation }) => {
                 />
               </View>
             ))}
+
+            {/* Add the custom box at the end */}
+            <View style={styles.profileWrapper}>
+              <TouchableOpacity
+                style={styles.customBox}
+                onPress={() => {
+                  if (isLoggedIn) {
+                    setCreatorModal(true); // Open the Creator Modal if logged in
+                  } else {
+                    setShowAlertModal(true); // Show custom alert modal
+                  }
+                }}
+              >
+                <View style={styles.profileWrapper}>
+                  <CustomProfileBox
+                    name={(accountName.trim()) ? `${accountName}` : 'Your Account'}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
         </Animated.ScrollView>
       </View>
@@ -697,19 +718,6 @@ const App = ({/*route,*/ navigation }) => {
 
         <TouchableOpacity style={styles.footerCenter}>
           <Text style={styles.footerText}>{accountName}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.greenPlusButton}
-          onPress={() => {
-            if (isLoggedIn) {
-              setCreatorModal(true); // Open the Creator Modal if logged in
-            } else {
-              setShowAlertModal(true); // Show custom alert modal
-            }
-          }}
-        >
-          <Text style={styles.plusText}>+</Text>
         </TouchableOpacity>
           
         <AlertModal
