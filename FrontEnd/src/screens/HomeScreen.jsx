@@ -9,6 +9,7 @@ import {
   Animated,
   Linking,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native';
 import { Modal, TextInput } from 'react-native';
@@ -42,7 +43,8 @@ const App = ({/*route,*/ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSavePopup, setShowSavePopup] = useState(false);
   const [isNotificationVisible, setIsNotificationVisible] = useState(false);
-  
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
 
@@ -170,7 +172,7 @@ const App = ({/*route,*/ navigation }) => {
 
     try {
         // Send API request to check if email exists in the database
-        const response = await api.post('/api/check-email/', { email: emailInput, password: passwordInput, password: passwordInput });
+        const response = await api.post('/api/check-email/', { email: emailInput, password: passwordInput });
 
         if (response.status === 200) {
             const user = response.data;
@@ -264,11 +266,91 @@ const App = ({/*route,*/ navigation }) => {
     setAccountName('');
   };
 
+  const handlePPupload = async () => {
+    const file = await handleFileSelect();
+    let response = null;
+
+    try {
+        if (file) {
+            console.log('PP dropped and parsed:', {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+            });
+
+            console.log("JSON-S3 upload going as planned");
+            let file_type = undefined;
+            if (file.type === 'application/json') {
+              file_type = 'json';
+            }
+            else {
+              file_type = 'png';
+            }
+            try {
+              // Call the backend to generate pre-signed URLs
+              response = await fetch(`/aws/generate_presigned_url/${email}/${file_type}/`, {
+                  method: 'POST',
+              });
+      
+              if (!response.ok) {
+                  throw new Error('Failed to generate presigned URLs');
+              }
+      
+              const data = await response.json();
+      
+              // Upload file to both user-specific and general folders
+              await fetch(data.user_presigned_url, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': file.type, // Ensure correct MIME type
+                  },
+                  body: file
+              });
+      
+              await fetch(data.general_presigned_url, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': file.type, // Ensure correct MIME type
+                  },
+                  body: file
+              });
+      
+              console.log('PP uploaded successfully!');
+
+              console.log("Opening URL", data.general_presigned_url);
+              setProfileImagePreview(data.user_presigned_url);
+          } catch (error) {
+              console.error('Error uploading file:', error);
+          }
+        } else {
+            Alert.alert('Error', 'No file was selected.');
+            return;
+        }
+    } catch (error) {
+        console.error('File upload error:', error.message);
+        if (error.response) {
+            Alert.alert('Error', error.response?.data?.error || 'An unexpected error occurred.');
+        } else {
+            Alert.alert('Error', 'An unexpected error occurred.');
+        }
+        return;
+    }
+
+  }
+
   const handleFileSelect = async () => {
     if (Platform.OS === 'web') {
       return new Promise((resolve, reject) => {
         const container = document.createElement('div');
         document.body.appendChild(container);
+        container.style.zIndex = 10000; // Ensure it's above everything else
+        container.style.position = 'fixed'; // Ensure it stays fixed
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.width = '100vw';
+        container.style.height = '100vh';
+        document.body.appendChild(container);
+
         const root = createRoot(container);
         const handleClose = () => {
             root.unmount(); // unmount the React tree
@@ -445,6 +527,51 @@ const App = ({/*route,*/ navigation }) => {
                 Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
                 return;
             }
+            
+          if (isLoggedIn) {
+            console.log("JSON-S3 upload going as planned");
+            let file_type = undefined;
+            if (file.type === 'application/json') {
+              file_type = 'json';
+            }
+            else {
+              file_type = 'png';
+            }
+            try {
+              // Call the backend to generate pre-signed URLs
+              response = await fetch(`/aws/generate_presigned_url/${email}/${file_type}/`, {
+                  method: 'POST',
+              });
+      
+              if (!response.ok) {
+                  throw new Error('Failed to generate presigned URLs');
+              }
+      
+              const data = await response.json();
+      
+              // Upload file to both user-specific and general folders
+              await fetch(data.user_presigned_url, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': file.type, // Ensure correct MIME type
+                  },
+                  body: file
+              });
+      
+              await fetch(data.general_presigned_url, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': file.type, // Ensure correct MIME type
+                  },
+                  body: file
+              });
+      
+              console.log('File uploaded successfully!');
+          } catch (error) {
+              console.error('Error uploading file:', error);
+          }
+        }
+
         } else {
             Alert.alert('Error', 'No file was selected.');
             return;
@@ -865,12 +992,17 @@ const App = ({/*route,*/ navigation }) => {
                 https://www.tiktok.com/@example
               </Text>
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Profile Picture URL"
-              value={creatorForm.profilePicture}
-              onChangeText={(text) => setCreatorForm((prev) => ({ ...prev, profilePicture: text }))}
-            />
+            {/* Profile Picture Picker */}
+            <TouchableOpacity onPress={ handlePPupload } style={styles.uploadButton}>
+              <Text style={styles.uploadButtonText}>
+                {profileImagePreview ? 'Change Profile Picture' : 'Upload Profile Picture'}
+              </Text>
+            </TouchableOpacity>
+
+            {profileImagePreview && (
+              <Image source={{ uri: profileImagePreview }} style={styles.profileImagePreview} />
+            )}
+
             <TextInput
               style={styles.input}
               placeholder="TikTok Username"
@@ -1156,6 +1288,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  uploadButton: {
+    backgroundColor: '#4CAF50', // Green background
+    paddingVertical: 10, // Padding on top and bottom
+    paddingHorizontal: 20, // Padding on left and right
+    borderRadius: 5, // Rounded corners
+    alignItems: 'center', // Center align text
+    justifyContent: 'center', // Center align text
+    marginBottom: 15, // Add some spacing at the bottom
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow position
+    shadowOpacity: 0.3, // Shadow transparency
+    shadowRadius: 3, // Shadow blur
+    elevation: 2, // Shadow for Android
+  },
+  uploadButtonText: {
+    color: '#FFFFFF', // White text color
+    fontSize: 16, // Font size
+    fontWeight: 'bold', // Bold text
   },
 });
 
