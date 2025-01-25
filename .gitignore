@@ -28,3 +28,5 @@ FrontEnd/venv/
 # All Env Files
 *.env
 venv/
+AWSCLIV2.pkg 
+# what is this on top?
