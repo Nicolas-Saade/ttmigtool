@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { viteCommonjs, esbuildCommonjs } from '@originjs/vite-plugin-commonjs';
+import { isTypeAliasDeclaration } from 'typescript';
+import typescript from '@rollup/plugin-typescript';
 
 const extensions = [
   ".web.tsx",
@@ -31,6 +33,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      'react-native-image-picker': 'react-native-web',
       'react-native': path.resolve(__dirname, 'node_modules/react-native-web'),
       'react-native/Libraries/Animated/NativeAnimatedHelper':
       'react-native-web/dist/cjs/exports/Animated/NativeAnimatedHelper',
@@ -42,13 +45,18 @@ export default defineConfig({
     },
     extensions: extensions,
   },
-  plugins: [viteCommonjs(), react()], // Include viteCommonjs plugin
+  plugins: [viteCommonjs(), react(), typescript()], // Include viteCommonjs plugin
   base: '/static/', // Base path for Django
   build: {
     commonjsOptions: {
       transformMixedEsModules: true, // Allow CommonJS and ES Modules together
     },
     rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'], // Example: Split React and React DOM into a separate chunk
+        },
+      },
       external: ['react-native-document-picker'], // Exclude the library from the bundle
       input: ['./src/main.jsx', './index.html'],
     },
