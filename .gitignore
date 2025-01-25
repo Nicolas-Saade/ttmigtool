@@ -1,0 +1,17 @@
+/FrontEnd/node_modules/
+.DS_Store
+/BackEnd/.DS_Store
+*.pyc
+__pycache__/
+*.env
+
+/BackEnd/.env
+BackEnd/.env
+/BackEnd/config/
+/venv/
+/myenv/
+node_modules/
+/BackEnd/staticfiles
+BackEnd/BackEnd/db.sqlite3
+FrontEnd/dist/
+BackEnd/Database/null_account_fixing.py
