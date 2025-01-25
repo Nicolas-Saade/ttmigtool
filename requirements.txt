@@ -47,5 +47,5 @@ supafunc==0.9.0
 typing_extensions==4.12.2
 urllib3==2.3.0
 websockets==13.1
-wheel @ file:///usr/local/Cellar/python%403.13/3.13.1/libexec/wheel-0.45.1-py3-none-any.whl#sha256=da46333d5dcbde6e20cf7e2f8fff9e9ce76e8c94dc4afd6fb95fc4bc2745fb5e
+wheel
 yarl==1.18.3
