@@ -1,0 +1,117 @@
+
+ {
+   "Profile": {
+    "AIMoji": {
+      "CreateDate": "",
+      "AIMojiList": null
+    },
+    "Auto Fill": {
+      "PhoneNumber": "N/A",
+      "Email": "N/A",
+      "FirstName": "N/A",
+      "LastName": "N/A",
+      "Address": "N/A",
+      "ZipCode": "N/A",
+      "Unit": "N/A",
+      "City": "N/A",
+      "State": "N/A",
+      "Country": "N/A"
+    },
+    "Follower List": {
+      "App": 1,
+      "IsFastLane": true,
+      "FansList": [
+        {
+          "Date": "2024-10-28 12:45:32",
+          "UserName": "joshua95174"
+        },
+        {
+          "Date": "2024-10-18 11:18:22",
+          "UserName": "jack_boudreau_147"
+        },
+        {
+          "Date": "2024-10-04 19:50:45",
+          "UserName": "jlmchuuong"
+        },
+        {
+          "Date": "2024-10-04 19:04:21",
+          "UserName": "airplane_lookout"
+        },
+        {
+          "Date": "2024-10-04 16:48:29",
+          "UserName": "jessicabella875"
+        }
+      ]},
+      "Following List": {
+        "App": 1,
+        "IsFastLane": true,
+        "Following": [
+          {
+            "Date": "2024-12-23 08:44:57",
+            "UserName": "user588725292228"
+          },
+          {
+            "Date": "2024-12-21 20:53:46",
+            "UserName": "fryytyson"
+          },
+          {
+            "Date": "2024-12-20 03:45:11",
+            "UserName": "yahoofinance"
+          },
+          {
+            "Date": "2024-12-18 04:18:51",
+            "UserName": "etymologynerd"
+          },
+          {
+            "Date": "2024-12-18 03:14:17",
+            "UserName": "join_vvt_group"
+          },
+          {
+            "Date": "2024-12-17 18:38:44",
+            "UserName": "zackbouery"
+          },
+          {
+            "Date": "2024-12-17 00:26:33",
+            "UserName": "militaryems"
+          },
+          {
+            "Date": "2024-12-16 09:00:38",
+            "UserName": "clawbossnj"
+          },
+          {
+            "Date": "2024-12-16 08:57:16",
+            "UserName": "mechaneering"
+          },
+          {
+            "Date": "2024-12-16 01:41:48",
+            "UserName": "tempseod"
+          },
+          {
+            "Date": "2024-12-10 08:21:12",
+            "UserName": "leohumpsalot"
+          }
+      ]},
+      "Profile Information": {
+        "App": 1,
+        "ProfileMap": {
+          "PlatformInfo": [],
+          "bioDescription": "19👨",
+          "birthDate": "24-Sep-2004",
+          "emailAddress": "None",
+          "likesReceived": "None",
+          "profilePhoto": "https://p16-sign-sg.tiktokcdn.com/aweme/1080x1080/tos-alisg-avt-0068/2d63af052731743f4d9703f885c8ab20.webp?lk3s=a5d48078&nonce=65587&refresh_token=6b59459f8cb7c24ad99d753aae068a22&x-expires=1735282800&x-signature=j%2FoFgVM4RnpWWGjFCnH%2F4PBd%2Bgs%3D&shp=a5d48078&shcp=7996dd0b",
+          "profileVideo": "None",
+          "telephoneNumber": "+96181742542",
+          "userName": "nabil_jaber2004"
+        }
+      },
+    "Video": {
+      "RecentlyDeletedPosts": {
+        "PostList": null
+      },
+      "Videos": {
+        "VideoList": null
+      }
+    }
+  }
+}
