@@ -16,5 +16,15 @@ BackEnd/BackEnd/db.sqlite3
 /BackEnd/.DS_Store
 .DS_Store
 
-# All Env Var Files
+# FrontEnd Files
+*.log
+*.log.*
+*/node_modules/
+node_modules
+FrontEnd/node_modules/
+FrontEnd/dist
+FrontEnd/venv/
+
+# All Env Files
 *.env
+venv/
