@@ -1,17 +1,20 @@
 /FrontEnd/node_modules/
-.DS_Store
-/BackEnd/.DS_Store
-*.pyc
-__pycache__/
-*.env
 
-/BackEnd/.env
-BackEnd/.env
-/BackEnd/config/
 /venv/
 /myenv/
 node_modules/
-/BackEnd/staticfiles
-BackEnd/BackEnd/db.sqlite3
 FrontEnd/dist/
-BackEnd/Database/null_account_fixing.py
+
+# Python/BackEnd Files
+*.pyc
+*/__pycache__/
+BackEnd/db.sqlite3
+BackEnd/BackEnd/db.sqlite3
+*/staticfiles/
+*/static/
+/BackEnd/config
+/BackEnd/.DS_Store
+.DS_Store
+
+# All Env Var Files
+*.env
