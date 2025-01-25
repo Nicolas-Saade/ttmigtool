@@ -18,6 +18,7 @@
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
     "axios": "^1.7.9",
+    "evergreen-ui": "^7.1.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.5",
@@ -25,6 +26,7 @@
     "react-native-document-picker": "^9.1.1",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^2.22.0",
+    "react-native-image-picker": "^7.2.3",
     "react-native-modal-dropdown": "^1.0.2",
     "react-native-reanimated": "^3.16.7",
     "react-native-safe-area-context": "^5.1.0",
@@ -46,6 +48,7 @@
     "@react-native/eslint-config": "0.76.5",
     "@react-native/gradle-plugin": "^0.76.5",
     "@react-native/metro-config": "^0.76.5",
+    "@rollup/plugin-typescript": "^12.1.2",
     "@types/react": "^18.2.6",
     "@types/react-test-renderer": "^18.0.0",
     "@vitejs/plugin-react": "^4.3.4",
@@ -55,6 +58,7 @@
     "prettier": "2.8.8",
     "react-native-codegen": "^0.70.7",
     "react-test-renderer": "18.3.1",
+    "typescript": "^5.7.3",
     "vite-plugin-react-native-web": "^1.1.2"
   },
   "engines": {
