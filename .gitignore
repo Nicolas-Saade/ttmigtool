@@ -16,3 +16,5 @@ node_modules/
 BackEnd/BackEnd/db.sqlite3
 FrontEnd/dist/
 BackEnd/Database/null_account_fixing.py
+
+AWSCLIV2.pkg

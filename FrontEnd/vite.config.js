@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { viteCommonjs, esbuildCommonjs } from '@originjs/vite-plugin-commonjs';
 import { isTypeAliasDeclaration } from 'typescript';
-import typescript from '@rollup/plugin-typescript';
 
 const extensions = [
   ".web.tsx",
@@ -45,7 +44,7 @@ export default defineConfig({
     },
     extensions: extensions,
   },
-  plugins: [viteCommonjs(), react(), typescript()], // Include viteCommonjs plugin
+  plugins: [viteCommonjs(), react()], // Include viteCommonjs plugin
   base: '/static/', // Base path for Django
   build: {
     commonjsOptions: {
