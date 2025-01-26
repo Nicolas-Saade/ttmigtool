@@ -47,6 +47,8 @@ const App = ({/*route,*/ navigation }) => {
 
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [algoResults, setAlgoResults] = useState({}); // Store algorithm ranking dict
+  const [sortOn, setSortOn] = useState(false); // State for sorting profiles
 
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
@@ -92,9 +94,44 @@ const App = ({/*route,*/ navigation }) => {
   const handleFilter = () => {
     setIsFilterModalVisible(true);
   };
+
+  const handleSortProfiles = () => {
+    // Check if algoResults is populated
+    if (sortOn) {
+      setSortOn(false);
+      setProfiles([...allProfiles]);}
+    else {
+      setSortOn(true);
+    }
+
+    if (Object.keys(algoResults).length === 0) {
+      Alert.alert('Notice', 'No algorithm results to sort by.');
+      return;
+    }
+
+    // Sort profiles by their algo score
+    const sortedProfiles = [...profiles].sort((a, b) => {
+      const scoreA = algoResults[a.UserName] || 0;
+      const scoreB = algoResults[b.UserName] || 0;
+      return scoreB - scoreA; // Descending order
+    });
+
+    console.log("Sorted Profiles:", sortedProfiles);
+    setProfiles(sortedProfiles);
+  };
+
+  // Simulate receiving algorithm results for testing (replace with your API logic)
+  useEffect(() => {
+    const sampleResults = {
+      veritasium: 5.3,
+      clawbossnj: 1.3,
+      nicholas_crown: 1.03,
+    };
+
+    setAlgoResults(sampleResults);
+  }, []);
   
   const handleSelectPlatform = (selectedPlatforms) => {
-    console.log("Selected Platforms", selectedPlatforms);
     if (selectedPlatforms.length === 0) {
       // If no platforms are selected, reset to all profiles
       setProfiles([...allProfiles]);
@@ -138,7 +175,6 @@ const App = ({/*route,*/ navigation }) => {
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    console.log("checking inside of search", allProfiles, profiles);
     if (query.trim() === '') {
       // If the search query is empty, reset to all profiles
       setProfiles([...allProfiles]);
@@ -217,8 +253,6 @@ const App = ({/*route,*/ navigation }) => {
         return;
       }
 
-        // console.log('Following List:', followingList);
-
       const prof = followingList.map(profile => {
         if (profile.UserName) {
           return profile.UserName;
@@ -233,8 +267,6 @@ const App = ({/*route,*/ navigation }) => {
         return;
       }
 
-      console.log('Usernames to map:', prof);
-
       // Fetch mapped profiles
       const mappedProfilesResponse = await api.post(
         '/api/profile-mapping/',
@@ -247,7 +279,6 @@ const App = ({/*route,*/ navigation }) => {
       );
 
         const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
-        // console.log('Mapped Profiles:', mappedProfiles);
 
       setProfiles([...mappedProfiles]);
       setAllProfiles([...mappedProfiles]);
@@ -272,13 +303,6 @@ const App = ({/*route,*/ navigation }) => {
 
     try {
         if (file) {
-            console.log('PP dropped and parsed:', {
-                name: file.name,
-                type: file.type,
-                size: file.size,
-            });
-
-            console.log("JSON-S3 upload going as planned");
             let file_type = undefined;
             if (file.type === 'application/json') {
               file_type = 'json';
@@ -314,10 +338,7 @@ const App = ({/*route,*/ navigation }) => {
                   },
                   body: file
               });
-      
-              console.log('PP uploaded successfully!');
 
-              console.log("Opening URL", data.general_presigned_url);
               setProfileImagePreview(data.user_presigned_url);
           } catch (error) {
               console.error('Error uploading file:', error);
@@ -489,16 +510,11 @@ const App = ({/*route,*/ navigation }) => {
   const handleFileDrop = async () => {
     const file = await handleFileSelect();
     let response = null;
+    const formData = new FormData();
 
     try {
         if (file) {
-            console.log('File successfully dropped and parsed:', {
-                name: file.name,
-                type: file.type,
-                size: file.size,
-            });
 
-            const formData = new FormData();
             if (Platform.OS === 'web') {
                 formData.append('file', file);
             } else {
@@ -529,7 +545,6 @@ const App = ({/*route,*/ navigation }) => {
             }
             
           if (isLoggedIn) {
-            console.log("JSON-S3 upload going as planned");
             let file_type = undefined;
             if (file.type === 'application/json') {
               file_type = 'json';
@@ -566,7 +581,6 @@ const App = ({/*route,*/ navigation }) => {
                   body: file
               });
       
-              console.log('File uploaded successfully!');
           } catch (error) {
               console.error('Error uploading file:', error);
           }
@@ -588,8 +602,21 @@ const App = ({/*route,*/ navigation }) => {
 
     // Process following data after a successful file upload
     try {
-        const { following } = response?.data || {};
-        console.log('Following data:', following);
+        let { following } = response?.data || {};
+
+        if (following && !Array.isArray(following)) {
+          try {
+            following = following["Following"];
+            if (following["Following"].size > 0) {
+              following = following["Following"];
+            } else {
+              throw new Error('No "Following" property found in the object.');
+            }
+          } catch (error) {
+            console.error("Error:", error.message);
+            Alert.alert('Error', 'No "following" data found in the uploaded JSON file.');
+          }
+        }
 
         if (following && Array.isArray(following)) {
             const prof = following
@@ -623,6 +650,7 @@ const App = ({/*route,*/ navigation }) => {
                         },
                     }
                 );
+                console.log("Mapped Profiles Response", mappedProfilesResponse);
                 mappedProfiles.push(...mappedProfilesResponse.data?.profiles || []);
 
               } catch (error) {
@@ -630,8 +658,6 @@ const App = ({/*route,*/ navigation }) => {
                 Alert.alert('Error', 'Failed to process profiles.');
               }
             }
-
-            console.log('Mapped Profiles:', mappedProfiles);
 
             setProfiles([...mappedProfiles]);
             setAllProfiles([...mappedProfiles]);
@@ -653,9 +679,93 @@ const App = ({/*route,*/ navigation }) => {
             Alert.alert('Error', 'Failed to process profiles.');
         }
     }
+
+    response = await api.post('/api/personalized-algorithm-data/', formData, {
+      headers: {
+          'Content-Type': 'multipart/form-data',
+      },
+  });
+
+  let liked_vids = [];
+  let bookmarked_vids = [];
+
+  if (response?.status === 200) {
+      Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
+
+      liked_vids = response.data.dict.Likes;
+      bookmarked_vids = response.data.dict.Bookmarks;
+  }
+  else {
+    Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
+  }
+
+  const batchSize = 30;
+  const batches = [];
+  let results = {};
+
+  // Split likes and bookmarks into batches of 100
+  for (let i = 0; i < liked_vids.length; i += batchSize) {
+    batches.push({ Likes: liked_vids.slice(i, i + batchSize), Bookmarks: [] });
+  }
+  for (let i = 0; i < bookmarked_vids.length; i += batchSize) {
+    batches.push({ Likes: [], Bookmarks: bookmarked_vids.slice(i, i + batchSize) });
+  }
+
+  let updatedResults = {};
+
+  for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+
+      try {
+        const response = await api.post('/api/personalized-creator-recommendation/', JSON.stringify(batch), {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log(`Batch ${i + 1} result:`, response);
+
+        let scores = response.data.ranked_creators;
+
+        console.log("SCORES", scores);
+
+        let key = undefined
+        let value = undefined
+
+        for (const creator of Object.values(scores)) {
+          key = creator.creator_handle
+          if (key === undefined) {
+            continue;
+          }
+          key = key.replace('@', '');
+          value = creator.score;
+          
+          if (!results[key]) {
+            results[key] = 0; // Start with 0 if the key isn't present
+          }
+          results[key] += value;
+        }
+
+        console.log('Ranked Creators:', results);
+        updatedResults = { ...algoResults };
+        for (const [key, value] of Object.entries(results)) {
+          if (updatedResults[key]) {
+            updatedResults[key] += value; // Add to existing value
+          } else {
+            updatedResults[key] = value; // Initialize new key
+          }
+        }
+
+      } catch (error) {
+        console.error(`Error sending batch ${i + 1}:`, error);
+      }
+  }
+
+  console.log("Updated Results", updatedResults);
+  setAlgoResults(updatedResults);
+  console.log("Algo Results", algoResults);
+
 };
-
-
 
   const handleBulkFollow = (platform) => {
     Alert.alert('Bulk Follow', `Following all users on ${platform}!`);
@@ -823,6 +933,9 @@ const App = ({/*route,*/ navigation }) => {
               <Text style={styles.footerText}>SignUp/Login</Text>
             </TouchableOpacity>
           )}
+            <TouchableOpacity style={styles.sortButton} onPress={handleSortProfiles}>
+              <Text style={styles.sortButtonText}>Sort</Text>
+            </TouchableOpacity>
           {/* Popup Modal */}
 
         {/* Subtle Notification Popup */}
@@ -1130,7 +1243,24 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#ccc',
   },
-  footerLeft: {},
+  footerLeft: {
+    flex: 1,
+    flexDirection: 'row', // Ensures horizontal alignment
+    justifyContent: 'flex-start', // Align items to the left
+    alignItems: 'center', // Vertically center items
+  },
+  sortButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginLeft: 10, // Add spacing between "SignUp/Login" and "Sort"
+  },
+  sortButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   footerCenter: {},
   footerRight: {},
   footerText: {
