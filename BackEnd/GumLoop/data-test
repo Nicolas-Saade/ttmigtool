@@ -1,0 +1,54 @@
+{
+  "basic_meta": {
+    "charset": "UTF-8",
+    "viewport": "width=device-width,initial-scale=1",
+    "title": "TikTok - Make Your Day"
+  },
+  "important_missing_meta": [
+    "meta description",
+    "og:title",
+    "og:description", 
+    "og:image",
+    "og:url",
+    "twitter:card",
+    "twitter:title",
+    "twitter:description",
+    "twitter:image",
+    "robots",
+    "keywords"
+  ],
+  "api_domains": {
+    "kind": "us",
+    "captcha": "//verification.tiktokw.us",
+    "imApi": "https://im-api.tiktok.com",
+    "imFrontier": "wss://im-ws.tiktok.com/ws/v2",
+    "mTApi": "https://www.tiktok.com",
+    "rootApi": "https://www.tiktok.com",
+    "secSDK": "",
+    "slardar": "mon16-normal-useast5.tiktokv.us",
+    "starling": "https://starling.tiktokv.us",
+    "tea": "https://mcs.tiktokw.us",
+    "teaChannel": "va",
+    "teaChannelType": "ttp",
+    "libraWebSDK": "https://libraweb.tiktokw.us",
+    "webcastApi": "https://webcast.us.tiktok.com",
+    "webcastRootApi": "https://webcast.us.tiktok.com",
+    "tcc": "https://lf16-config.tiktokcdn-us.com/obj/tcc-config-web-tx/",
+    "locationApi": "https://location.tiktokw.us"
+  },
+  "service_region": {
+    "vregion": "US-TTP",
+    "vgeo": "VGeo-US"
+  },
+  "link_resources": {
+    "preconnect": [
+      "https://lf16-tiktok-web.tiktokcdn-us.com"
+    ],
+    "manifest": "/manifest.json"
+  },
+  "unconventional_meta": {
+    "pumbaa-ctx": "login=0,ftc=0",
+    "script-manager": "Contains configuration for various script imports",
+    "slardar-config": "Contains monitoring/analytics configuration"
+  }
+}
