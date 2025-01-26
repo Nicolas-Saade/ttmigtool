@@ -119,17 +119,6 @@ const App = ({/*route,*/ navigation }) => {
     console.log("Sorted Profiles:", sortedProfiles);
     setProfiles(sortedProfiles);
   };
-
-  // Simulate receiving algorithm results for testing (replace with your API logic)
-  useEffect(() => {
-    const sampleResults = {
-      veritasium: 5.3,
-      clawbossnj: 1.3,
-      nicholas_crown: 1.03,
-    };
-
-    setAlgoResults(sampleResults);
-  }, []);
   
   const handleSelectPlatform = (selectedPlatforms) => {
     if (selectedPlatforms.length === 0) {
@@ -760,10 +749,7 @@ const App = ({/*route,*/ navigation }) => {
         console.error(`Error sending batch ${i + 1}:`, error);
       }
   }
-
-  console.log("Updated Results", updatedResults);
   setAlgoResults(updatedResults);
-  console.log("Algo Results", algoResults);
 
 };
 
