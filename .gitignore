@@ -1,5 +1,4 @@
 /FrontEnd/node_modules/
-<<<<<<< HEAD
 
 /venv/
 /myenv/
@@ -31,7 +30,6 @@ FrontEnd/venv/
 venv/
 AWSCLIV2.pkg 
 # what is this on top?
-=======
 .DS_Store
 /BackEnd/.DS_Store
 *.pyc
@@ -51,4 +49,3 @@ FrontEnd/dist/
 BackEnd/Database/null_account_fixing.py
 
 AWSCLIV2.pkg
->>>>>>> MobileWebFix
