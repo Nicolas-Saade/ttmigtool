@@ -1,14 +1,38 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { colors, typography, spacing, shadows, borderRadius } from '../theme';
 
 const WelcomeScreen1 = ({ navigation }) => {
+  const { height } = useWindowDimensions();
+
   return (
     <View style={styles.container}>
       <View style={styles.gradientOverlay} />
       <View style={styles.content}>
-        <Text style={styles.title}>Protect Your TikTok Faves!</Text>
-        <Text style={styles.subtitle}>
+        {/* Adjusted title positioning */}
+        <Text
+          style={[
+            styles.title,
+            { marginTop: height * 0.08 }, // Dynamically position based on viewport height
+          ]}
+        >
+          Protect Your TikTok Faves!
+        </Text>
+        <Text
+          style={[
+            styles.subtitle,
+            {
+              top: '20%', // Centered within the gradient (adjust this percentage as needed)
+            },
+          ]}
+        >
           Migrate your TikTok preferences to a new platform seamlessly.
         </Text>
         <View style={styles.noteCard}>
@@ -60,28 +84,28 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: spacing.xl,
+    justifyContent: 'space-between',
   },
   title: {
     ...typography.h1,
     color: colors.primaryText,
-    marginBottom: spacing.md,
     textAlign: 'center',
+    zIndex: 1, // Ensure it's layered above the gradient
   },
   subtitle: {
     ...typography.h3,
     color: colors.secondaryText,
     textAlign: 'center',
-    marginBottom: spacing.xl,
+    position: 'absolute', // Absolute positioning to align within the gradient
+    width: '100%', // Ensures the subtitle spans across the container
+    zIndex: 1, // Keeps it above the gradient
   },
   noteCard: {
     backgroundColor: colors.secondaryBg,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    width: '100%',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
     ...shadows.md,
     borderLeftWidth: 4,
     borderLeftColor: colors.neonPink,
@@ -98,15 +122,15 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: '100%',
-    gap: spacing.md,
+    marginTop: spacing.lg,
   },
   button: {
-    width: '100%',
     padding: spacing.md,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.sm,
+    marginBottom: spacing.md,
   },
   tutorialButton: {
     backgroundColor: colors.secondaryBg,

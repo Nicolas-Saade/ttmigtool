@@ -1191,7 +1191,7 @@ const styles = StyleSheet.create({
   },
   
   changeFileButtonSmall: {
-    backgroundColor: '#ddd !important', // Light gray background for less prominence
+    backgroundColor: '#ddd', // Light gray background for less prominence
     paddingVertical: 6, // Smaller padding
     paddingHorizontal: 10, // Smaller width
     borderRadius: 5,
