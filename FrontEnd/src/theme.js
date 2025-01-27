@@ -102,6 +102,7 @@ export const shadows = {
 export const commonStyles = {
   container: {
     flex: 1,
+    minHeight: '100vh',
     backgroundColor: colors.primaryBg,
   },
   card: {

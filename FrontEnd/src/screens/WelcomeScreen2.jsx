@@ -1,17 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, ScrollView, Platform } from 'react-native';
 import { colors, typography, spacing, shadows, borderRadius } from '../theme';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const WelcomeScreen2 = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[colors.neonBlue, colors.neonPink, colors.neonPurple]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientOverlay}
-      />
+      <View style={styles.gradientOverlay} />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Let's Get Started! 🎉</Text>
         <Text style={styles.subtitle}>
@@ -89,6 +83,10 @@ const styles = StyleSheet.create({
     right: 0,
     height: '30%',
     opacity: 0.1,
+    backgroundColor: colors.neonBlue,
+    ...(Platform.OS === 'web' && {
+      backgroundImage: `linear-gradient(135deg, ${colors.neonBlue}, ${colors.neonPink}, ${colors.neonPurple})`,
+    }),
   },
   scrollView: {
     flex: 1,

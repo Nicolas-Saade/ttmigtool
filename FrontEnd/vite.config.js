@@ -22,6 +22,11 @@ export default defineConfig({
   define: {
     global: 'window', // Define `global` for compatibility with some libraries
     __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'), // Define __DEV__ for React Native
+    'process.env': {
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV),
+      EXPO_OS: JSON.stringify('web'),
+    },
+    'process.platform': JSON.stringify('web'),
   },
   optimizeDeps: {
     esbuildOptions: {
@@ -31,9 +36,16 @@ export default defineConfig({
         '.ts': 'tsx',
       },
       plugins: [
-        esbuildCommonjs(['@react-native/assets-registry']),
-        react(),
-        tsconfigPaths(),
+        {
+          name: 'commonjs-resolver',
+          setup(build) {
+            build.onResolve({ filter: /.*/ }, args => {
+              if (args.path.includes('@react-native/assets-registry')) {
+                return { path: require.resolve('react-native-web/dist/cjs/modules/AssetRegistry') }
+              }
+            })
+          }
+        }
       ],
     },
     exclude: ['react-native-document-picker'], // Exclude from dependency optimization
