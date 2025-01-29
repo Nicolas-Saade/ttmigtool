@@ -5,39 +5,52 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  ScrollView,
   useWindowDimensions,
 } from 'react-native';
 import { colors, typography, spacing, shadows, borderRadius } from '../theme';
+import { SafeAreaView } from 'react-native-web';
 
 const WelcomeScreen1 = ({ navigation }) => {
   const { height } = useWindowDimensions();
+  const isSmallScreen = height < 700;
+
+  const dynamicStyles = {
+    gradientHeight: isSmallScreen ? 150 : '30%',
+    contentPadding: isSmallScreen ? 16 : spacing.xl,
+    titleSize: isSmallScreen ? 24 : typography.h1.fontSize,
+    subtitleSize: isSmallScreen ? 14 : typography.h3.fontSize,
+    noteSize: isSmallScreen ? 12 : typography.body.fontSize,
+    spacing: isSmallScreen ? 12 : spacing.lg,
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.gradientOverlay} />
-      <View style={styles.content}>
-        {/* Adjusted title positioning */}
-        <Text
-          style={[
-            styles.title,
-            { marginTop: height * 0.08 }, // Dynamically position based on viewport height
-          ]}
-        >
-          Protect Your TikTok Faves!
-        </Text>
-        <Text
-          style={[
-            styles.subtitle,
-            {
-              top: '20%', // Centered within the gradient (adjust this percentage as needed)
-            },
-          ]}
-        >
-          Migrate your TikTok preferences to a new platform seamlessly.
-        </Text>
-        <View style={styles.noteCard}>
-          <Text style={styles.noteTitle}>A Note from the Creator</Text>
-          <Text style={styles.note}>
+    <SafeAreaView style={styles.container}>
+      <View style={[styles.gradientOverlay, { height: dynamicStyles.gradientHeight }]} />
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={[
+          styles.scrollContent,
+          { 
+            padding: dynamicStyles.contentPadding,
+            gap: dynamicStyles.spacing 
+          }
+        ]}
+      >
+        <View style={[styles.headerContainer, { marginBottom: dynamicStyles.spacing }]}>
+          <Text style={[styles.title, { fontSize: dynamicStyles.titleSize }]}>
+            Protect Your TikTok Faves!
+          </Text>
+          <Text style={[styles.subtitle, { fontSize: dynamicStyles.subtitleSize }]}>
+            Migrate your TikTok preferences to a new platform seamlessly.
+          </Text>
+        </View>
+
+        <View style={[styles.card, { padding: dynamicStyles.spacing }]}>
+          <Text style={[styles.noteTitle, { fontSize: dynamicStyles.subtitleSize }]}>
+            A Note from the Creator
+          </Text>
+          <Text style={[styles.note, { fontSize: dynamicStyles.noteSize }]}>
             Hey! I'm Nicolas, a college student who built this service with love and dedication. 
             I wanted to help us stay connected and preserve the personalized joy that TikTok brings 
             to our daily lives, just in case it ever gets banned.
@@ -46,22 +59,27 @@ const WelcomeScreen1 = ({ navigation }) => {
             network and loved ones!
           </Text>
         </View>
-        <View style={styles.buttonContainer}>
+
+        <View style={[styles.buttonContainer, { gap: dynamicStyles.spacing / 2 }]}>
           <TouchableOpacity
             style={[styles.button, styles.tutorialButton]}
             onPress={() => navigation.navigate('WelcomeScreen2')}
           >
-            <Text style={styles.buttonText}>Watch Tutorial</Text>
+            <Text style={[styles.buttonText, { fontSize: dynamicStyles.subtitleSize }]}>
+              Watch Tutorial
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.migrateButton]}
             onPress={() => navigation.navigate('HomeScreen')}
           >
-            <Text style={styles.buttonText}>Migrate My Data</Text>
+            <Text style={[styles.buttonText, { fontSize: dynamicStyles.subtitleSize }]}>
+              Migrate My Data
+            </Text>
           </TouchableOpacity>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -75,62 +93,57 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: '30%',
     opacity: 0.1,
     backgroundColor: colors.neonBlue,
     ...(Platform.OS === 'web' && {
       backgroundImage: `linear-gradient(135deg, ${colors.neonBlue}, ${colors.neonPink}, ${colors.neonPurple})`,
     }),
   },
-  content: {
+  scrollView: {
     flex: 1,
-    padding: spacing.xl,
-    justifyContent: 'space-between',
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  headerContainer: {
+    alignItems: 'center',
   },
   title: {
-    ...typography.h1,
     color: colors.primaryText,
     textAlign: 'center',
-    zIndex: 1, // Ensure it's layered above the gradient
+    fontFamily: typography.h1.fontFamily,
   },
   subtitle: {
-    ...typography.h3,
     color: colors.secondaryText,
     textAlign: 'center',
-    position: 'absolute', // Absolute positioning to align within the gradient
-    width: '100%', // Ensures the subtitle spans across the container
-    zIndex: 1, // Keeps it above the gradient
+    fontFamily: typography.h3.fontFamily,
   },
-  noteCard: {
+  card: {
     backgroundColor: colors.secondaryBg,
     borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
     ...shadows.md,
     borderLeftWidth: 4,
     borderLeftColor: colors.neonPink,
   },
   noteTitle: {
-    ...typography.h3,
     color: colors.neonPink,
-    marginBottom: spacing.sm,
+    fontFamily: typography.h3.fontFamily,
+    marginBottom: 8,
   },
   note: {
-    ...typography.body,
     color: colors.secondaryText,
-    lineHeight: 24,
+    fontFamily: typography.body.fontFamily,
+    lineHeight: 20,
   },
   buttonContainer: {
     width: '100%',
-    marginTop: spacing.lg,
   },
   button: {
-    padding: spacing.md,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 12,
     ...shadows.sm,
-    marginBottom: spacing.md,
   },
   tutorialButton: {
     backgroundColor: colors.secondaryBg,
@@ -141,8 +154,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neonBlue,
   },
   buttonText: {
-    ...typography.button,
     color: colors.primaryText,
+    fontFamily: typography.button.fontFamily,
   },
 });
 
