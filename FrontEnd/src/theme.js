@@ -5,16 +5,16 @@ export const colors = {
   secondaryBg: '#1E1E1E',
   
   // Accent Colors
-  neonBlue: '#4AB3F4',
+  neonBlue: '#00A3FF',
   neonPink: '#F94879',
-  neonPurple: '#9B51E0',
+  neonPurple: '#9D00FF',
   
   // Text Colors
   primaryText: '#FFFFFF',
   secondaryText: '#B3B3B3',
   
   // Borders and Dividers
-  divider: '#303030',
+  divider: '#2D2D2D',
   
   // Status Colors
   error: '#FF4C4C',
@@ -31,19 +31,19 @@ export const gradients = {
 export const typography = {
   h1: {
     fontFamily: 'Quicksand_700Bold',
-    fontSize: '32px',
+    fontSize: 32,
   },
   h2: {
     fontFamily: 'Quicksand_700Bold',
-    fontSize: '24px',
+    fontSize: 24,
   },
   h3: {
     fontFamily: 'Quicksand_500Medium',
-    fontSize: '20px',
+    fontSize: 20,
   },
   body: {
     fontFamily: 'Nunito_400Regular',
-    fontSize: '16px',
+    fontSize: 16,
   },
   bodyBold: {
     fontFamily: 'Nunito_600SemiBold',
@@ -51,7 +51,7 @@ export const typography = {
   },
   button: {
     fontFamily: 'Quicksand_700Bold',
-    fontSize: '16px',
+    fontSize: 14,
   },
 };
 
@@ -77,17 +77,17 @@ export const borderRadius = {
 export const shadows = {
   sm: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.18,
-    shadowRadius: 1.0,
-    elevation: 1,
-  },
-  md: {
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 4,
   },
   lg: {
     shadowColor: '#000',
