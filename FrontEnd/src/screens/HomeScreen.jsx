@@ -63,7 +63,7 @@ const App = ({/*route,*/ navigation }) => {
   const [token, setToken] = useState(''); // State for the random token in Creator Form
 
 
-  const [showRegisterModal, setShowRegisterModal] = useState(false); // State for registration modal
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   // const [loading, setLoading] = useState(true);
 
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -94,6 +94,9 @@ const App = ({/*route,*/ navigation }) => {
 
   const [contentHeight, setContentHeight] = useState(0);
 
+  // Add this new state near your other states
+  const [showSortAlert, setShowSortAlert] = useState(false);
+
   useEffect(() => {
     const rows = Math.ceil(profiles.length / columns);
     const boxHeight = 160; // Height of each profile box
@@ -107,28 +110,36 @@ const App = ({/*route,*/ navigation }) => {
   };
 
   const handleSortProfiles = () => {
-    // Check if algoResults is populated
-    if (sortOn) {
-      setSortOn(false);
-      setProfiles([...allProfiles]);}
-    else {
-      setSortOn(true);
-    }
+    // // Check if algoResults is populated
+    // if (sortOn) {
+    //   setSortOn(false);
+    //   setProfiles([...allProfiles]);}
+    // else {
+    //   setSortOn(true);
+    // }
 
-    if (Object.keys(algoResults).length === 0) {
-      Alert.alert('Notice', 'No algorithm results to sort by.');
-      return;
-    }
+    // if (Object.keys(algoResults).length === 0) {
+    //   Alert.alert('Notice', 'No algorithm results to sort by.');
+    //   return;
+    // }
 
-    // Sort profiles by their algo score
-    const sortedProfiles = [...profiles].sort((a, b) => {
-      const scoreA = algoResults[a.UserName] || 0;
-      const scoreB = algoResults[b.UserName] || 0;
-      return scoreB - scoreA; // Descending order
-    });
+    // // Sort profiles by their algo score
+    // const sortedProfiles = [...profiles].sort((a, b) => {
+    //   const scoreA = algoResults[a.UserName] || 0;
+    //   const scoreB = algoResults[b.UserName] || 0;
+    //   return scoreB - scoreA; // Descending order
+    // });
 
-    console.log("Sorted Profiles:", sortedProfiles);
-    setProfiles(sortedProfiles);
+    // console.log("Sorted Profiles:", sortedProfiles);
+    // setProfiles(sortedProfiles);
+
+    // HyperParameter Tuning on Sorting Algorithm still needs to be done
+
+    setShowSortAlert(true);
+    // Hide the alert after 3 seconds
+    setTimeout(() => {
+      setShowSortAlert(false);
+    }, 3000);
   };
   
   const handleSelectPlatform = (selectedPlatforms) => {
@@ -1153,6 +1164,20 @@ const App = ({/*route,*/ navigation }) => {
         onSelectPlatform={handleSelectPlatform} // Pass handleSelectPlatform to the modal
       />
 
+      {showSortAlert && (
+        <View style={styles.sortAlertOverlay}>
+          <View style={styles.sortAlertContent}>
+            <Text style={styles.sortAlertTitle}>Coming Soon! 🚀</Text>
+            <Text style={styles.sortAlertText}>
+              I'm working hard on our sorting algorithm
+              to better understand your niches and preferences.{'\n\n'}
+              Thank you for your interest - {'\n'}
+              I am taking note of this feature's popularity!
+            </Text>
+          </View>
+        </View>
+      )}
+
     </SafeAreaView>
 
   );
@@ -1447,6 +1472,43 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     marginBottom: 10,
+  },
+  sortAlertOverlay: {
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 20,
+    borderRadius: borderRadius.lg,
+    zIndex: 2000,
+    maxWidth: '90%',
+    width: 400,
+  },
+  sortAlertContent: {
+    backgroundColor: colors.secondaryBg,
+    padding: 20,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    ...shadows.md,
+    width: '100%', // Ensure content takes full width
+  },
+  sortAlertTitle: {
+    color: colors.primaryText,
+    fontSize: typography.h3.fontSize,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    width: '100%', // Ensure title takes full width
+  },
+  sortAlertText: {
+    color: colors.secondaryText,
+    fontSize: typography.body.fontSize,
+    textAlign: 'center',
+    width: '100%', // Ensure text takes full width
+    flexWrap: 'wrap', // Enable text wrapping
+    display: 'flex', // Enable flexbox
+    marginTop: 5,
   },
 });
 
