@@ -7,7 +7,7 @@ import instagramIcon from '../assets/Insta-logo-reg.png'; // Regular Instagram i
 import instagramIconPlaceholder from '../assets/Insta-logo-not.png'; // Placeholder for missing URL
 import twitterIcon from '../assets/X-logo-reg.webp'; // Regular X (Twitter) icon
 import twitterIconPlaceholder from '../assets/X-logo-not.png'; // Placeholder for missing URL
-import redditIcon from '../assets/reddit-logo-reg.webp'; // Regular Reddit icon
+import redditIcon from '../assets/reddit-logo-reg.png'; // Regular Reddit icon
 import redditIconPlaceholder from '../assets/reddit-logo-not.png'; // Placeholder for missing URL
 import placeHolder from '../assets/Neutral-placeholder-profile.jpg';
 import plusPhoto from '../assets/Custom-placeholder-profile.png'
