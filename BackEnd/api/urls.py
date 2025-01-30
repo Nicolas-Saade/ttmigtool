@@ -7,6 +7,6 @@ urlpatterns = [
         path('create-user-profile/', create_user_profile, name='create_user_profile'),
         path('check-email/', check_email, name='check_email'),
         path('creator-data/', creator_data, name='creator_data'),
-        path('personalized-algorithm-data/', personalized_Algorithm_Data, name='personalized_Algorithm_Data'),
+        path('personalized-algorithm-data/', personalized_Algorithm_Data, name='personalized_algorithm_Data'),
         path('personalized-creator-recommendation/', personalized_creator_recommendation, name='personalized_creator_recommendation')
 ]

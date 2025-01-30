@@ -219,7 +219,7 @@ def creator_data(request):
 def personalized_Algorithm_Data(request):
     """API to handle JSON file upload and access the liked/bookmarked videos to generate creator recomendation."""
     # Get the user's email from the request (optional)
-
+    print("ENTERED")
     uploaded_file = request.FILES.get('file', None)
     if not uploaded_file:
         return Response({"error": " file provided."}, status=400)
@@ -231,6 +231,11 @@ def personalized_Algorithm_Data(request):
 
         # Extract "following" list from the JSON (if present)
         profile = json_data.get("Activity", {})
+
+        if not profile:
+            return Response({
+            "message": "No profile data."
+        }, status=200)
 
         likes = profile.get("Like List", []).get("ItemFavoriteList", [])
         bookmarks = profile.get("Favorite Videos", []).get("FavoriteVideoList", [])
