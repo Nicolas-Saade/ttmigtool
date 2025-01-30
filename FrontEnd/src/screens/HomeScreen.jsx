@@ -22,6 +22,7 @@ import { createRoot } from 'react-dom/client'
 import SearchBar from '../components/SearchBar';
 import AlertModal from '../components/NotLoggedInAdding';
 import FilterModal from '../components/FilterModal';
+import { colors, typography, borderRadius, shadows } from '../theme';
 
 const screenWidth = Dimensions.get('window').width;
 const boxWidth = 150; // Set your desired profile box width
@@ -62,7 +63,7 @@ const App = ({/*route,*/ navigation }) => {
   const [token, setToken] = useState(''); // State for the random token in Creator Form
 
 
-  const [showRegisterModal, setShowRegisterModal] = useState(false); // State for registration modal
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   // const [loading, setLoading] = useState(true);
 
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -91,33 +92,54 @@ const App = ({/*route,*/ navigation }) => {
     extrapolate: 'clamp',
   });
 
+  const [contentHeight, setContentHeight] = useState(0);
+
+  // Add this new state near your other states
+  const [showSortAlert, setShowSortAlert] = useState(false);
+
+  useEffect(() => {
+    const rows = Math.ceil(profiles.length / columns);
+    const boxHeight = 160; // Height of each profile box
+    const verticalMargin = 15; // Margin between boxes
+    const minHeight = rows * (boxHeight + verticalMargin) + 100; // Added padding for header
+    setContentHeight(minHeight);
+  }, [profiles.length]);
+
   const handleFilter = () => {
     setIsFilterModalVisible(true);
   };
 
   const handleSortProfiles = () => {
-    // Check if algoResults is populated
-    if (sortOn) {
-      setSortOn(false);
-      setProfiles([...allProfiles]);}
-    else {
-      setSortOn(true);
-    }
+    // // Check if algoResults is populated
+    // if (sortOn) {
+    //   setSortOn(false);
+    //   setProfiles([...allProfiles]);}
+    // else {
+    //   setSortOn(true);
+    // }
 
-    if (Object.keys(algoResults).length === 0) {
-      Alert.alert('Notice', 'No algorithm results to sort by.');
-      return;
-    }
+    // if (Object.keys(algoResults).length === 0) {
+    //   Alert.alert('Notice', 'No algorithm results to sort by.');
+    //   return;
+    // }
 
-    // Sort profiles by their algo score
-    const sortedProfiles = [...profiles].sort((a, b) => {
-      const scoreA = algoResults[a.UserName] || 0;
-      const scoreB = algoResults[b.UserName] || 0;
-      return scoreB - scoreA; // Descending order
-    });
+    // // Sort profiles by their algo score
+    // const sortedProfiles = [...profiles].sort((a, b) => {
+    //   const scoreA = algoResults[a.UserName] || 0;
+    //   const scoreB = algoResults[b.UserName] || 0;
+    //   return scoreB - scoreA; // Descending order
+    // });
 
-    console.log("Sorted Profiles:", sortedProfiles);
-    setProfiles(sortedProfiles);
+    // console.log("Sorted Profiles:", sortedProfiles);
+    // setProfiles(sortedProfiles);
+
+    // HyperParameter Tuning on Sorting Algorithm still needs to be done
+
+    setShowSortAlert(true);
+    // Hide the alert after 3 seconds
+    setTimeout(() => {
+      setShowSortAlert(false);
+    }, 3000);
   };
   
   const handleSelectPlatform = (selectedPlatforms) => {
@@ -851,14 +873,20 @@ const App = ({/*route,*/ navigation }) => {
 
         {/* Dynamic Profile Boxes */}
         <Animated.ScrollView
-          style={styles.profilesContainer}
-          onScroll={Animated.event( // Event listener for scroll
-            [{ nativeEvent: { contentOffset: { y: scrollAnim } } }], // bounds the scrollAnim value to the Y-axis scroll position
-            { useNativeDriver: true, }
+          style={[
+            styles.profilesContainer,
+            { minHeight: contentHeight }
+          ]}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollAnim } } }],
+            { useNativeDriver: true }
           )}
           scrollEventThrottle={16}
         >
-          <View style={styles.gridContainer}>
+          <View style={[
+            styles.gridContainer,
+            { minHeight: contentHeight }
+          ]}>
             {profiles.map((profile, index) => (
               <View key={index} style={styles.profileWrapper}>
                 <ProfileBox
@@ -910,36 +938,19 @@ const App = ({/*route,*/ navigation }) => {
         }}
       >
         <View style={styles.footerLeft}>
+          <TouchableOpacity style={styles.sortButton} onPress={handleSortProfiles}>
+            <Text style={styles.sortButtonText}>Sort</Text>
+          </TouchableOpacity>
+          
           {isLoggedIn ? (
-            <TouchableOpacity onPress={handleLogout}>
+            <TouchableOpacity onPress={handleLogout} style={styles.authButton}>
               <Text style={styles.footerText}>Sign Out</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={handleLogin}>
+            <TouchableOpacity onPress={handleLogin} style={styles.authButton}>
               <Text style={styles.footerText}>SignUp/Login</Text>
             </TouchableOpacity>
           )}
-            <TouchableOpacity style={styles.sortButton} onPress={handleSortProfiles}>
-              <Text style={styles.sortButtonText}>Sort</Text>
-            </TouchableOpacity>
-          {/* Popup Modal */}
-
-        {/* Subtle Notification Popup */}
-        {showSavePopup && (
-          <TouchableOpacity
-            style={[styles.notificationPopup]}
-            activeOpacity={0.9} // Add a bit of feedback when clicked
-            onPress={() => {
-              popupOpacity.setValue(0);
-              setShowSavePopup(false);
-              setIsNotificationVisible(false); // Hide notification
-            }} // Dismiss the popup
-          >
-            <Text style={styles.notificationText}>
-              To save this list and your preferences, SignUp/Login, and we’ll take care of the rest!!
-            </Text>
-          </TouchableOpacity>
-        )}
         </View>
 
         <TouchableOpacity style={styles.footerCenter}>
@@ -1153,6 +1164,20 @@ const App = ({/*route,*/ navigation }) => {
         onSelectPlatform={handleSelectPlatform} // Pass handleSelectPlatform to the modal
       />
 
+      {showSortAlert && (
+        <View style={styles.sortAlertOverlay}>
+          <View style={styles.sortAlertContent}>
+            <Text style={styles.sortAlertTitle}>Coming Soon! 🚀</Text>
+            <Text style={styles.sortAlertText}>
+              I'm working hard on our sorting algorithm
+              to better understand your niches and preferences.{'\n\n'}
+              Thank you for your interest - {'\n'}
+              I am taking note of this feature's popularity!
+            </Text>
+          </View>
+        </View>
+      )}
+
     </SafeAreaView>
 
   );
@@ -1168,37 +1193,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
-    paddingVertical: 6,
-    backgroundColor: '#f5f5f5',
+    paddingVertical: 12,
+    backgroundColor: colors.primaryBg,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.divider,
   },
   backArrow: {
     fontSize: 24,
-    color: '#007bff',
+    color: colors.neonBlue,
+    marginRight: 10,
   },
-  changeFileButton: {
-    backgroundColor: '#4CAF50', // Original button background
-    paddingVertical: 10,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  filterButton: {
+    backgroundColor: colors.neonPurple,
+    paddingVertical: 8,
     paddingHorizontal: 15,
-    borderRadius: 5,
+    borderRadius: borderRadius.md,
+    ...shadows.sm,
   },
-  
-  changeFileText: {
-    color: '#fff', // Original button text color
-    fontSize: 16,
+  filterButtonText: {
+    color: colors.primaryText,
+    fontSize: typography.button.fontSize,
     fontWeight: 'bold',
   },
-  
+  changeFileButton: {
+    backgroundColor: colors.neonBlue,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: borderRadius.md,
+    ...shadows.sm,
+  },
+  changeFileText: {
+    color: colors.primaryText,
+    fontSize: typography.button.fontSize,
+    fontWeight: 'bold',
+  },
   changeFileButtonSmall: {
-    backgroundColor: '#ddd !important', // Light gray background for less prominence
+    backgroundColor: '#ddd', // Light gray background for less prominence
     paddingVertical: 6, // Smaller padding
     paddingHorizontal: 10, // Smaller width
     borderRadius: 5,
     borderWidth: 1,
     borderColor: '#ccc', // Subtle border
   },
-  
   changeFileTextSmall: {
     color: '#555', // Subtle gray text
     fontSize: 12, // Smaller font size
@@ -1208,11 +1249,13 @@ const styles = StyleSheet.create({
   profilesContainer: {
     flex: 1,
     paddingHorizontal: 10,
+    paddingBottom: 80, // Space for footer
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    paddingBottom: 60, // Add padding at the bottom for footer
   },
   profileWrapper: {
     flexBasis: isMobile ? '48%' : `${100 / columns}%`,
@@ -1221,36 +1264,48 @@ const styles = StyleSheet.create({
   },
   // Footer styles
   footer: {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#f0f0f0',
+    padding: 15,
+    backgroundColor: colors.primaryBg,
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
+    borderTopColor: colors.divider,
+    zIndex: 1000,
   },
   footerLeft: {
     flex: 1,
-    flexDirection: 'row', // Ensures horizontal alignment
-    justifyContent: 'flex-start', // Align items to the left
-    alignItems: 'center', // Vertically center items
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
   },
   sortButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginLeft: 10, // Add spacing between "SignUp/Login" and "Sort"
+    backgroundColor: colors.neonBlue,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: borderRadius.md,
+    marginRight: 15,
+    ...shadows.sm,
   },
   sortButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: colors.primaryText,
+    fontSize: typography.button.fontSize,
     fontWeight: 'bold',
+  },
+  authButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
   },
   footerCenter: {},
   footerRight: {},
   footerText: {
-    fontWeight: 'bold',
+    color: colors.primaryText,
+    fontSize: typography.body.fontSize,
+    fontWeight: '500',
   },
   // Modal styles
   modalContainer: {
@@ -1393,18 +1448,6 @@ const styles = StyleSheet.create({
     fontSize: 14, // Font size
     fontWeight: 'bold', // Bold font
   },
-  filterButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  filterButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
   uploadButton: {
     backgroundColor: '#4CAF50', // Green background
     paddingVertical: 10, // Padding on top and bottom
@@ -1423,6 +1466,49 @@ const styles = StyleSheet.create({
     color: '#FFFFFF', // White text color
     fontSize: 16, // Font size
     fontWeight: 'bold', // Bold text
+  },
+  profileImagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 10,
+  },
+  sortAlertOverlay: {
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 20,
+    borderRadius: borderRadius.lg,
+    zIndex: 2000,
+    maxWidth: '90%',
+    width: 400,
+  },
+  sortAlertContent: {
+    backgroundColor: colors.secondaryBg,
+    padding: 20,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    ...shadows.md,
+    width: '100%', // Ensure content takes full width
+  },
+  sortAlertTitle: {
+    color: colors.primaryText,
+    fontSize: typography.h3.fontSize,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    width: '100%', // Ensure title takes full width
+  },
+  sortAlertText: {
+    color: colors.secondaryText,
+    fontSize: typography.body.fontSize,
+    textAlign: 'center',
+    width: '100%', // Ensure text takes full width
+    flexWrap: 'wrap', // Enable text wrapping
+    display: 'flex', // Enable flexbox
+    marginTop: 5,
   },
 });
 
