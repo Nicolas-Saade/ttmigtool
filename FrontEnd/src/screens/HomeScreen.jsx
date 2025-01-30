@@ -278,21 +278,40 @@ const App = ({/*route,*/ navigation }) => {
         return;
       }
 
-      // Fetch mapped profiles
-      const mappedProfilesResponse = await api.post(
-        '/api/profile-mapping/',
-        { prof },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      // Process profiles in chunks of 30
+      const processProfileChunk = async (chunk) => {
+        try {
+          const response = await api.post(
+            '/api/profile-mapping/',
+            { prof: chunk },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          return response.data?.profiles || [];
+        } catch (error) {
+          console.error('Chunk processing error:', error);
+          return [];
         }
-      );
+      };
 
-        const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
+      // Split array into chunks of 30
+      const chunks = [];
+      for (let i = 0; i < prof.length; i += 30) {
+        chunks.push(prof.slice(i, i + 30));
+      }
 
-      setProfiles([...mappedProfiles]);
-      setAllProfiles([...mappedProfiles]);
+      // Process all chunks and combine results
+      const allMappedProfiles = [];
+      for (const chunk of chunks) {
+        const chunkProfiles = await processProfileChunk(chunk);
+        allMappedProfiles.push(...chunkProfiles);
+      }
+
+      setProfiles([...allMappedProfiles]);
+      setAllProfiles([...allMappedProfiles]);
 
       Alert.alert('Success', 'Profiles successfully mapped from your data!');
     } catch (error) {
