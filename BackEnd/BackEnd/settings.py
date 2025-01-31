@@ -158,3 +158,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React's default development server
     "http://localhost:8081",
 ]
+
+# settings.py
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Use your email provider's SMTP host
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True  # Use TLS
+EMAIL_USE_SSL = False  # Use TLS instead
+EMAIL_HOST_USER = 'email_@gmail.com'
+EMAIL_HOST_PASSWORD = 'your_app_password'  # Use an app password (google app password)
+DEFAULT_FROM_EMAIL = 'your_email@gmail.com'  # Default sender email

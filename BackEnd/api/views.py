@@ -10,6 +10,8 @@ import bcrypt
 import bcrypt
 import json
 from django.shortcuts import render
+from django.core.mail import send_mail
+from django.conf import settings
 
 def index_view(request):
     return render(request, "index.html")
@@ -132,7 +134,22 @@ def create_user_profile(request):
             "json_file": json_file,
         }).execute()
 
-        return Response({"message": "User profile created successfully!"}, status=201)
+        # if response.data:  # If user was created successfully
+        #     # Send welcome email
+        #     try:
+        #         send_mail(
+        #             subject='Welcome to Social Media Manager!',
+        #             message=f'Hi {first_name},\n\nWelcome to Social Media Manager! Your account has been created successfully.',
+        #             from_email=settings.DEFAULT_FROM_EMAIL,
+        #             recipient_list=[email],
+        #             fail_silently=True,
+        #         )
+        #     except Exception as e:
+        #         print(f"Failed to send welcome email: {str(e)}")
+        #         # Continue even if email fails - don't block user registration
+            
+        #     return Response({"message": "User profile created successfully!"}, status=201)
+            
     except Exception as e:
         return Response({"error": f"Failed to create user profile: {str(e)}"}, status=500)
 

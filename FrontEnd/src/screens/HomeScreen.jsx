@@ -23,6 +23,9 @@ import SearchBar from '../components/SearchBar';
 import AlertModal from '../components/NotLoggedInAdding';
 import FilterModal from '../components/FilterModal';
 import { colors, typography, borderRadius, shadows } from '../theme';
+import LoginModal from '../components/LogInModal';
+import RegisterModal from '../components/RegisterModal';
+import { handleFileSelect } from '../components/FileSelector';
 
 const screenWidth = Dimensions.get('window').width;
 const boxWidth = 150; // Set your desired profile box width
@@ -260,7 +263,7 @@ const App = ({/*route,*/ navigation }) => {
       const followingList = profile["Following List"]?.Following || [];
 
       if (followingList.length === 0) {
-        //Alert.alert('Notice', 'No "following" data found in your JSON file.');
+        Alert.alert('Notice', 'No "following" data found in your JSON file.');
         return;
       }
 
@@ -389,107 +392,6 @@ const App = ({/*route,*/ navigation }) => {
 
   }
 
-  const handleFileSelect = async () => {
-    if (Platform.OS === 'web') {
-      return new Promise((resolve, reject) => {
-        const container = document.createElement('div');
-        document.body.appendChild(container);
-        container.style.zIndex = 10000; // Ensure it's above everything else
-        container.style.position = 'fixed'; // Ensure it stays fixed
-        container.style.top = '0';
-        container.style.left = '0';
-        container.style.width = '100vw';
-        container.style.height = '100vh';
-        document.body.appendChild(container);
-
-        const root = createRoot(container);
-        const handleClose = () => {
-            root.unmount(); // unmount the React tree
-            container.remove(); // Remove container from the DOM
-        };
-        const DropzoneComponent = () => {
-            const onDrop = (acceptedFiles) => {
-                if (acceptedFiles.length > 0) {
-                    resolve(acceptedFiles[0]); // Resolve with the selected file
-                    handleClose(); // Cleanup the modal
-                } else {
-                    reject(new Error('No file selected'));
-                    handleClose();
-                }
-            };
-            const { getRootProps, getInputProps, isDragActive } = useDropzone({
-                onDrop,
-                accept: '.json', // Accept only JSON files
-                maxFiles: 1, // Single file
-            });
-            return (
-                <div
-                    {...getRootProps()}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        zIndex: 1000,
-                    }}
-                >
-                    <div
-                        style={{
-                            backgroundColor: '#fff',
-                            padding: '20px',
-                            borderRadius: '8px',
-                            textAlign: 'center',
-                        }}
-                    >
-                        <input {...getInputProps()} />
-                        {isDragActive ? (
-                            <p>Drop the file here...</p>
-                        ) : (
-                            <p>Drag & drop a JSON file here, or click to select one</p>
-                        )}
-                        <button
-                            onClick={handleClose}
-                            style={{
-                                marginTop: '10px',
-                                padding: '10px 20px',
-                                backgroundColor: '#f44336',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-        root.render(<DropzoneComponent />);
-    });
-    } else {
-      // Native-specific file picker using react-native-document-picker
-      const DocumentPicker = await import('react-native-document-picker'); // Dynamically import
-      try {
-        const results = await DocumentPicker.pick({
-          type: [DocumentPicker.types.allFiles], // Adjust file type validation if needed
-        });
-        return results[0]; // Return the first selected file
-      } catch (err) {
-        if (DocumentPicker.isCancel(err)) {
-          // User canceled the picker --> no action needed
-        } else {
-          Alert.alert('Something went wrong with file picking', err.message);
-        }
-      }
-    }
-  };
-
   //hanlde account registration
   const handleRegister = async (firstName, lastName, email, password, file) => {
     try {
@@ -521,6 +423,10 @@ const App = ({/*route,*/ navigation }) => {
         setPassword('');
         setAccountName(firstName + ' ' + lastName); // Optionally set the user's name
         setEmail(email);
+        // Check for JSON file and process it
+        if (response.data.json_file && Object.keys(response.data.json_file).length > 0) {
+          processFollowingFromJson(response.data.json_file);
+        }
       } else {
         Alert.alert('Error', 'Unexpected response from the server.');
       }
@@ -987,121 +893,40 @@ const App = ({/*route,*/ navigation }) => {
         </View>
       </Animated.View>
 
-      <Modal
+      <LoginModal
         visible={showLoginModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowLoginModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Login</Text>
-            <Text style = {styles.message}>With an account, we can take care of your data file, so you can focus on migrating your preferences.</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail} // Update state
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword} // Update state
-              secureTextEntry
-            />
-
-            {/* Buttons Row */}
-            <View style={styles.buttonsRow}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowLoginModal(false)}
-              >
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.loginButton}
-                onPress={handleCheckEmail} // Call handleCheckEmail instead of handleLogin
-              >
-                <Text style={styles.loginButtonText}>Login</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Sign Up Button */}
-            <TouchableOpacity
-              style={styles.signUpButton}
-              onPress={() => {
-                setShowLoginModal(false); // Close login modal
-                setShowRegisterModal(true); // Open register modal
-              }}
-            >
-              <Text style={styles.signUpButtonText}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={(userData) => {
+          setIsLoggedIn(true);
+          setAccountName(`${userData.first_name} ${userData.last_name}`);
+          if (userData.json_file && Object.keys(userData.json_file).length > 0) {
+            processFollowingFromJson(userData.json_file);
+          }
+        }}
+        onRegisterClick={() => {
+          setShowLoginModal(false);
+          setShowRegisterModal(true);
+        }}
+      />
 
       {/* Registration Modal */}
-      <Modal
+      <RegisterModal
         visible={showRegisterModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowRegisterModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Register</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              value={firstName}
-              onChangeText={setFirstName} // Update state
-              autoCapitalize="words"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              value={lastName}
-              onChangeText={setLastName} // Update state
-              autoCapitalize="words"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email Address"
-              value={email}
-              onChangeText={setEmail} // Update state
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword} // Update state
-              secureTextEntry
-            />
-
-            {/* Buttons Row */}
-            <View style={styles.buttonsRow}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowRegisterModal(false)}
-              >
-                <Text style={styles.closeButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.registerButton}
-                onPress={() => handleRegister(firstName, lastName, email, password)}
-              >
-                <Text style={styles.registerButtonText}>Register</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
+        onClose={() => setShowRegisterModal(false)}
+        onRegisterSuccess={(userData) => {
+          setIsLoggedIn(true);
+          setAccountName(`${userData.first_name} ${userData.last_name}`);
+          // Clear form data
+          setFirstName('');
+          setLastName('');
+          setEmail('');
+          setPassword('');
+          // Check for JSON file and process it
+          if (userData.json_file && Object.keys(userData.json_file).length > 0) {
+            processFollowingFromJson(userData.json_file);
+          }
+        }}
+      />
 
       {/* Creator Modal */}
       <Modal
