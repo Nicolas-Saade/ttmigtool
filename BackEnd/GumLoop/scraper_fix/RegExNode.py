@@ -53,12 +53,12 @@ def main(url, scraped_data, params):
         info = {}
 
         # Extract creator handle (e.g., "brianpils" in "brianpils•Follow") --> before .Follow
-        # TODO: what if already followed? --> WebScraper never has anyone followed
+        # WARNING: what if already followed? --> WebScraper never has anyone followed
         creator_match = re.search(r'([\w\.\d_]+)•Follow', block)
         info['creator handle'] = creator_match.group(1) if creator_match else None
 
         # Extract video caption: take text after '•Follow' and before '… more' 
-        # TODO what if already followed? --> WebScraper never has anyone followed
+        # WARNING what if already followed? --> WebScraper never has anyone followed
         caption_match = re.search(r'•Follow(.*?)… more', block, re.DOTALL)
         caption = caption_match.group(1).strip() if caption_match else None
         info['video caption'] = caption
@@ -71,23 +71,24 @@ def main(url, scraped_data, params):
         comments_match = re.search(r'Comment([\d,\.K]+)', block)
         info['comments'] = convert_number(comments_match.group(1)) if comments_match else None
 
-        # Extract reshares (if present: "Share" followed by number)
-        reshares_match = re.search(r'Share([\d,\.K]+)', block)
-        info['reshares'] = convert_number(reshares_match.group(1)) if reshares_match else None
-
         # Extract hashtags from the caption text (if any)
         if caption:
             hashtags = set(re.findall(r'#(\w+)', caption))
-            info['hashtags'] = hashtags
+            info['hashtags'] = hashtags if hashtags else None
         else:
             info['hashtags'] = []
 
         # Extract sound used:
-        # Using heuristic: Look for text after "Audio image" up to "· Original audio"
-        # TODO Check how robust this is.
-        sound_match = re.search(r'Audio image\s*([\w\.\d_]+)\s*·\s*Original audio', block)
-        info['sound used'] = sound_match.group(1) if sound_match else None
+        # Look for text between moreAudio and Play button
+        sound_match = re.search(r'moreAudio(.*?)(?=Play button)', block)
+        if sound_match:
+            sound = sound_match.group(1).strip()
+            info['sound used'] = sound
+        else:
+            info['sound used'] = None
 
+        # print("INFOOOO", info)
+        # print("\n\n\n")
         return info
 
     def extract_tiktok_post_info(block):
@@ -272,7 +273,6 @@ def main(url, scraped_data, params):
         
         Otherwise, returns False.
         """
-        
         if platform == "tiktok":
             if "& Policies© 2025 TikTok" not in scraped_data:
                 return True
@@ -343,7 +343,7 @@ def main(url, scraped_data, params):
         
         Returns the API response if re-triggered, or None if the scraped_data appears valid.
         """
-        if invalid_output(scraped_data, None): # TODO placeholder, should be acc platform
+        if invalid_output(scraped_data, None): # WARN placeholder, should be acc platform if implemented API CALL
             print("Invalid scraped data detected. Re-triggering API with toggled advanced scraping.")
             # If no payload is provided, use a hard-coded payload.
             if payload is None:
@@ -387,34 +387,22 @@ def main(url, scraped_data, params):
             #     return formatted_output
             # return "Invalid scraped data"
 
-        # For some reason, the scraped data contains a duplicate set of
-        # posts starting with a second occurrence
-        # of the header "InstagramLog InSign Up" --> Not to count!!!!!
-        header = "InstagramLog InSign Up"
-        first_index = scraped_data.find(header)
-        second_index = scraped_data.find(header, first_index + len(header))
-
-        if second_index != -1:
-            scraped_data = scraped_data[:second_index]
-
-        # Use known "Audio is muted" point --> Checked that Instagram reels
+        # Use known "is muted" point to delimit the single 
+        # post that we are extracting data for--> Checked that Instagram reels
         # Always start out as muted:
         # (https://www.pcmag.com/how-to/how-to-turn-off-autoplay-videos#:~:text=Instagram,-(Credit%3A%20Instagram)&text=When%20you%20open%20Instagram%2C%20the,time%20you%20open%20the%20app.)
-        blocks = scraped_data.split("Audio is muted")
-        
-        # Iterating over all blocks/videos extracted.
-        # And choosing the first one with meaningful 
-        # results (the video we are looking for)
-        for block in blocks:
-            block = block.strip()
-            if not block:
-                continue
+        first_muted = scraped_data.find(" is muted")
+        second_muted = scraped_data.find(" is muted", first_muted + 1)
+        block = scraped_data[first_muted + len(" is muted"):second_muted]
 
-            post_info = extract_instagram_post_info(block)
-            post_info['video_url'] = url
-            post_info['platform'] = platform
+        print("Identified blocks:", type(block))
+        print(block)
 
-            formatted_output.append(post_info)
+        post_info = extract_instagram_post_info(block)
+        post_info['video_url'] = url
+        post_info['platform'] = platform
+
+        formatted_output.append(post_info)
 
         for attempt in formatted_output:
             if attempt['likes'] and attempt['comments'] and attempt['creator handle']:
@@ -427,8 +415,9 @@ def main(url, scraped_data, params):
 if __name__ == "__main__":
 
     url = "https://www.instagram.com/reels/DFiM1rjs7ZX/?hl=en"
-    scraped_data = """
-    output:
+    scraped_data = """ 
+
+output:
 
 Instagram
 InstagramLog InSign UpAudio is mutedjadnasrr•Followلما تحاول تلطف جو 🙂😂 لاتنسو الفولو ❤️‍🔥… moreAudio imagejadnasrr · Original audioPlay button iconLike5,682Comment205ShareMoreAudio is mutednick.digiovanni•FollowRatatouille IRLRatatouille IRL… moreAudio imagenick.digiovanni · Original audioPlay button iconLike393KComment1,645ShareMoreAudio is mutedthepointerbrothers•Followand the games always last 45 mins 😭😂 #thepointerbrothersand the games always last 45 mins 😭😂 #thepointerbrothers… moreAudio imagehits_dingers14 · Original audiohits_dingers14 · Original audioTagged users2 peoplePlay button iconLike522KComment623ShareMoreAudio is mutedjeanie3legs•FollowTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddogTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddog… moreAudio imagedadjokescentralofficial · Original audiodadjokescentralofficial · Original audioPlay button iconLike103KComment963ShareMore
