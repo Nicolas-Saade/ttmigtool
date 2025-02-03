@@ -6,11 +6,12 @@ def main(url, scraped_data, params):
     from pprint import pprint
     import dotenv
     import os
+    
     dotenv.load_dotenv()
     
-    bearer = os.getenv("Bearer")
+    bearer = os.getenv("BEARER")
     api_header = os.getenv("HEADER")
-    payload = os.getenv("Payload")
+    payload = os.getenv("PAYLOAD")
     api_url = os.getenv("API_URL")
 
     def convert_number(num_str):
@@ -254,27 +255,45 @@ def main(url, scraped_data, params):
 
             return info
 
-    def invalid_output(block):
+    def invalid_output(block, platform):
         """
         Check if the scraped_data is invalid.
         
         Returns True if any of the following conditions are met:
+        For Tiktok:
         - The text "& Policies© 2025 TikTok" is not found.
         - The text "| TikTok" is not found.
         - A timer pattern "XX:XX / XX:XX" is not found.
         
+        For Instagram:
+        - The text "Audio is muted" is not found.
+        - The text pattern •Follow is not found.
+        - The text patterns: Like, Comment, Share are not found.
+        
         Otherwise, returns False.
         """
-        # TODO tailor to instagram to
-        if "& Policies© 2025 TikTok" not in scraped_data:
-            return True
-        if "| TikTok" not in scraped_data:
-            return True
+        
+        if platform == "tiktok":
+            if "& Policies© 2025 TikTok" not in scraped_data:
+                return True
+            if "| TikTok" not in scraped_data:
+                return True
 
-        # Check for the timer pattern "XX:XX / XX:XX"
-        timer_pattern = re.compile(r'\d\d:\d\d\s*/\s*\d\d:\d\d')
-        if not timer_pattern.search(scraped_data):
-            return True
+            timer_pattern = re.compile(r'\d\d:\d\d\s*/\s*\d\d:\d\d')
+            if not timer_pattern.search(scraped_data):
+                return True
+
+        elif platform == "instagram":
+            if "Audio is muted" not in scraped_data:
+                return True
+            if "•Follow" not in scraped_data:
+                return True
+            if "Like" not in scraped_data:
+                return True
+            if "Comment" not in scraped_data:
+                return True
+            if "Share" not in scraped_data:
+                return True
 
         return False
 
@@ -324,7 +343,7 @@ def main(url, scraped_data, params):
         
         Returns the API response if re-triggered, or None if the scraped_data appears valid.
         """
-        if invalid_output(scraped_data):
+        if invalid_output(scraped_data, None): # TODO placeholder, should be acc platform
             print("Invalid scraped data detected. Re-triggering API with toggled advanced scraping.")
             # If no payload is provided, use a hard-coded payload.
             if payload is None:
@@ -334,17 +353,6 @@ def main(url, scraped_data, params):
             return {"api_response": api_response, "note": "Invalid scraped data; re-triggered pipeline."}
         else:
             return None
-
-    if invalid_output(scraped_data):
-        # Check if the scraped data is invalid. If so, retrigger flow.
-        formatted_output = "Invalid scraped data"
-        return formatted_output
-
-        # api_result = api_call(scraped_data)
-        # if api_result is not None:
-        #     formatted_output = api_result["api_response"]
-        #     return formatted_output
-        # return "Invalid scraped data"
         
     formatted_output = []
 
@@ -352,9 +360,32 @@ def main(url, scraped_data, params):
     if "tiktok" in url.lower():
         platform = "tiktok"
         formatted_output = extract_tiktok_post_info(scraped_data)
+        if invalid_output(scraped_data, platform):
+            # Check if the scraped data is invalid. If so, retrigger flow.
+            formatted_output = "Invalid scraped data"
+            return formatted_output
+
+            # Simulating API start pipeline call
+            # api_result = api_call(scraped_data)
+            # if api_result is not None:
+            #     formatted_output = api_result["api_response"]
+            #     return formatted_output
+            # return "Invalid scraped data"
         return formatted_output
     elif "instagram" in url.lower():
         platform = "instagram"
+
+        if invalid_output(scraped_data, platform):
+            # Check if the scraped data is invalid. If so, retrigger flow.
+            formatted_output = "Invalid scraped data"
+            return formatted_output
+
+            # Simulating API start pipeline call
+            # api_result = api_call(scraped_data)
+            # if api_result is not None:
+            #     formatted_output = api_result["api_response"]
+            #     return formatted_output
+            # return "Invalid scraped data"
 
         # For some reason, the scraped data contains a duplicate set of
         # posts starting with a second occurrence
@@ -395,15 +426,14 @@ def main(url, scraped_data, params):
 
 if __name__ == "__main__":
 
-    url = "https://www.tiktok.com/@joerauth_/video/7465131856061680926?lang=en"
-    scraped_data = """"
-The Dude Who's Everywhere Except Gaming | TikTok TikTokLog inTikTokSearchFor YouExploreFollowingUpload LIVEProfileMoreLog inCompanyProgramTerms & Policies© 2025 TikTok179K695751015.2K00:03 / 01:22joerauth_Joe rauth · 5d ago FollowmoreBud never plays #fyp
-#friends
-#dude
-#pov
-original sound - Joe rauthYou may likeIm sorry sweetie , please don’t go :( || SCP : @roninfx_ || IB :@Mæve || #wintersoldier #sebastianstan #buckybarnes #sebastianstanedit #marvel #captainamerica #buckybarnesedit #avengers #avengersinfinitywar #american #edit #foryou #dontletthisflop #foryoupage #fyp #actor @𝓥𝔁𝓵𝓵𝓷𝔂_ @🖤 @𝓂𝑒𝓁’🦈 @𝓒𝓵𝓪𝓲𝓻𝓮 @𝒜𝓁𝒾 🪽 @adelina @Lisa 🫧🎱 @⋆.˚✮𝓐𝓵𝓲𝓷𝓪✮˚.⋆ @⋆ ִ ۫𝓝 𝚊 𝚗 𝚊’ ★ @@☆ logan @✪ @✪𝑬𝒃𝒐𝒏𝒚⧗ @⭒๋࣭ Ju ⭒๋࣭ @🦾✪ Lauren ✪🦾 @@artemis @Cranberry ✪⧗ @Dary || drotik✪ @kio @kyoo ﹒‹𝟹 @L🙏 @nuggets ᖭི༏ᖫྀ
-@mell._ldr726K·1-18joerauth_1.7M·2024-11-5just give us the whole week #fyp #blowthisup #viralvideo #funny #joerauth #school #thanksgiving cjonwarthunder101.2K·2024-11-25liamcolosseum576.3K·2024-11-6I was watching a live and seeing the viewers drop off so fast #tiktokban #gym #fitness #fyp jharnlifts176.5K·1-19Get me hype #fyp #dude #ex #pov
-joerauth_1.2M·2024-11-8mangatok__271.7K·2024-11-25hate when this happens… #fyp #4d_buildss #popcorn 4d_buildss29.9K·1-20#fyp #foryoupage #xyzcba #lgbt🌈 #fypシ #xyzbca fleet.wood.mak1.6M·2024-11-5Messing Around #schoolboyrunaway #horrorgame #indiegame #funnygaming #fyp #gaming itzchrisgames243·1-9All because of a doorbell is crazy😂 #runaway #gaming #fyp #foryoupage kaiista_114·1-6Hes got your back #fyp #friends #girl #pov joerauth_1.3M·2024-10-22MERCH IS LIVE! #reels #dad #parents #pov joerauth_387.2K·2023-10-4jorgesouza432776·1-8More videos695 commentsLog in to comment
+    url = "https://www.instagram.com/reels/DFiM1rjs7ZX/?hl=en"
+    scraped_data = """
+    output:
+
+Instagram
+InstagramLog InSign UpAudio is mutedjadnasrr•Followلما تحاول تلطف جو 🙂😂 لاتنسو الفولو ❤️‍🔥… moreAudio imagejadnasrr · Original audioPlay button iconLike5,682Comment205ShareMoreAudio is mutednick.digiovanni•FollowRatatouille IRLRatatouille IRL… moreAudio imagenick.digiovanni · Original audioPlay button iconLike393KComment1,645ShareMoreAudio is mutedthepointerbrothers•Followand the games always last 45 mins 😭😂 #thepointerbrothersand the games always last 45 mins 😭😂 #thepointerbrothers… moreAudio imagehits_dingers14 · Original audiohits_dingers14 · Original audioTagged users2 peoplePlay button iconLike522KComment623ShareMoreAudio is mutedjeanie3legs•FollowTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddogTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddog… moreAudio imagedadjokescentralofficial · Original audiodadjokescentralofficial · Original audioPlay button iconLike103KComment963ShareMore
+
+InstagramLog InSign UpAudio is mutedjadnasrr•Followلما تحاول تلطف جو 🙂😂 لاتنسو الفولو ❤️‍🔥… moreAudio imagejadnasrr · Original audioPlay button iconLike5,682Comment205ShareMoreAudio is mutednick.digiovanni•FollowRatatouille IRLRatatouille IRL… moreAudio imagenick.digiovanni · Original audioPlay button iconLike393KComment1,645ShareMoreAudio is mutedthepointerbrothers•Followand the games always last 45 mins 😭😂 #thepointerbrothersand the games always last 45 mins 😭😂 #thepointerbrothers… moreAudio imagehits_dingers14 · Original audioTagged users2 peoplePlay button iconLike522KComment623ShareMoreAudio is mutedjeanie3legs•FollowTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddogTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddog… moreAudio imagedadjokescentralofficial · Original audioPlay button iconLike103KComment963ShareMore
     """
     params = {}
 
