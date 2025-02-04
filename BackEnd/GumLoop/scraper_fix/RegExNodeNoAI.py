@@ -38,6 +38,28 @@ def main(url, scraped_data, regex_params, params):
         except ValueError:
             return num_str
 
+    def parse_regex_pattern(pattern_str):
+        """Parse a JSON-formatted string into pattern components"""
+        try:
+            # Escape backslashes in the pattern before JSON parsing
+            pattern_str = pattern_str.replace('\\', '\\\\')
+            # Convert Python literals to JSON format
+            pattern_str = pattern_str.replace('True', 'true').replace('False', 'false').replace('None', 'null')
+            
+            # Parse JSON
+            pattern_info = json.loads(pattern_str)
+            
+            # Convert string "true"/"false" to boolean if needed
+            if isinstance(pattern_info.get("all_matches"), str):
+                pattern_info["all_matches"] = pattern_info["all_matches"].lower() == "true"
+                
+            return pattern_info
+            
+        except json.JSONDecodeError as e:
+            print(f"Error parsing pattern string: {e}")
+            print(f"Problematic string: {pattern_str}")
+            return None
+
     def apply_custom_regex(text, regex_patterns, info_dict):
         """
         Apply custom regex patterns to text and add results to existing dictionary.
@@ -58,13 +80,16 @@ def main(url, scraped_data, regex_params, params):
         Returns:
             None (modifies info_dict in place)
         """
+        # Convert string format to pattern info
+        regex_patterns = [p for p in (parse_regex_pattern(p) for p in regex_patterns) if p]
+
+        # Process each pattern
         for pattern_info in regex_patterns:
-            print(pattern_info)
             try:
-                field_name = pattern_info.get("field_name")
-                pattern = pattern_info.get("pattern")
+                field_name = pattern_info["field_name"]
+                pattern = pattern_info["pattern"]
                 all_matches = pattern_info.get("all_matches", False)
-                
+
                 if not field_name or not pattern:
                     continue
                     
@@ -77,8 +102,8 @@ def main(url, scraped_data, regex_params, params):
                     match = re.search(full_pattern, text)
                     info_dict[field_name] = match.group(1) if match and match.groups() else match.group(0) if match else None
                     
-            except re.error as e:
-                print(f"Invalid regex pattern for field '{field_name}': {e}")
+            except (re.error, KeyError) as e:
+                print(f"Error processing pattern for field '{field_name}': {e}")
                 info_dict[field_name] = None
 
     def extract_instagram_post_info(block, cached_scraped_data):
@@ -519,19 +544,25 @@ rd #spaceforce #soldier #kagandunlap kagan_dunlap21.6K·2d ago DHS and the Penta
 
 @JENJENBASIL
     """
+    # Old Input:
+    # regex_params = [
+    #         {
+    #             "field_name": "mentions",
+    #             "pattern": "@([\w\.-]+)",
+    #             "all_matches": True
+    #         },
+    #         {
+    #             "field_name": "7eleven_slurpee",
+    #             "pattern": "7eleven", #"FREE\s*7-?Eleven\s+slurpee\s+on\s+\w+\s+\d+\s*\(no purchase\)\s*7eleven",
+    #             "all_matches": False
+    #         }
+    #     ]
+
     regex_params = [
-            {
-                "field_name": "mentions",
-                "pattern": "@([\w\.-]+)",
-                "all_matches": True
-            },
-            {
-                "field_name": "7eleven_slurpee",
-                "pattern": "7eleven", #"FREE\s*7-?Eleven\s+slurpee\s+on\s+\w+\s+\d+\s*\(no purchase\)\s*7eleven",
-                "all_matches": False
-            }
+            '{"field_name": "mentions","pattern": "@([\w\.-]+)","all_matches": True}',
+            '{"field_name": "7eleven_slurpee", "pattern": "7eleven", "all_matches": False}',
         ]
 
-    output = main(url, scraped_data, regex_params, None)
+    output = main(url, scraped_data, regex_params, params = None)
     from pprint import pprint
     pprint(output)

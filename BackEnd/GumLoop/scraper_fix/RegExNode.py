@@ -49,6 +49,7 @@ def main(url, scraped_data, regex_params, params):
         """
         # Use a snippet of the text for context
         text_snippet = text[:500]
+
         # Build the prompt.
         # We include the field name, the context (snippet), whether we want all matches or not,
         # and the AI prompt provided by the user.
@@ -89,34 +90,42 @@ def main(url, scraped_data, regex_params, params):
         else:
             return f"Error: {response.status_code}, {response.text}"
 
+    def parse_regex_pattern(pattern_str):
+        """Parse a JSON-formatted string into pattern components"""
+        try:
+            # Escape backslashes in the pattern before JSON parsing
+            pattern_str = pattern_str.replace('\\', '\\\\')
+            # Convert Python literals to JSON format
+            pattern_str = pattern_str.replace('True', 'true').replace('False', 'false').replace('None', 'null')
+            
+            # Parse JSON
+            pattern_info = json.loads(pattern_str)
+            
+            # Convert string "true"/"false" to boolean if needed
+            if isinstance(pattern_info.get("all_matches"), str):
+                pattern_info["all_matches"] = pattern_info["all_matches"].lower() == "true"
+                
+            return pattern_info
+            
+        except json.JSONDecodeError as e:
+            print(f"Error parsing pattern string: {e}")
+            print(f"Problematic string: {pattern_str}")
+            return None
+
     def apply_custom_regex(text, regex_patterns, info_dict):
         """
-        Apply custom regex patterns (AI generated or regular ones) to text and add results to existing dictionary.
-        
-        Args:
-            text (str): Text to apply regex patterns to
-            regex_patterns (list): List of dicts with format:
-                [
-                    {
-                        "field_name": "custom_field_1",
-                        "pattern": "regex_pattern_1"/ None, # If None, the regex pattern is AI generated
-                        "all_matches": True/False  # If True, findall() is used instead of search()
-                        "AI_Prompt": "Prompt for AI to generate regex pattern" # If None, the regex pattern is provided by the user
-                    },
-                    ...
-                ]
-            info_dict (dict): Dictionary to add the custom fields to
-                
-        Returns:
-            None (modifies info_dict in place)
+        Apply custom regex patterns to text and add results to existing dictionary.
         """
+        # Convert string format to pattern info
+        regex_patterns = [p for p in (parse_regex_pattern(p) for p in regex_patterns) if p]
+
+        # Process each pattern
         for pattern_info in regex_patterns:
-            print(pattern_info)
             try:
-                field_name = pattern_info.get("field_name")
-                pattern = pattern_info.get("pattern") if pattern_info.get("pattern") else None
+                field_name = pattern_info["field_name"]
+                pattern = pattern_info["pattern"]
                 all_matches = pattern_info.get("all_matches", False)
-                AI_Prompt = pattern_info.get("AI_Prompt") if pattern_info.get("AI_Prompt") else None
+                AI_Prompt = pattern_info.get("AI_Prompt")
 
                 if not field_name or (not pattern and not AI_Prompt) or (pattern and AI_Prompt):
                     continue
@@ -137,8 +146,8 @@ def main(url, scraped_data, regex_params, params):
                     match = re.search(full_pattern, text)
                     info_dict[field_name] = match.group(1) if match and match.groups() else match.group(0) if match else None
                     
-            except re.error as e:
-                print(f"Invalid regex pattern for field '{field_name}': {e}")
+            except (re.error, KeyError) as e:
+                print(f"Error processing pattern for field '{field_name}': {e}")
                 info_dict[field_name] = None
 
     def extract_instagram_post_info(block, cached_scraped_data):
@@ -274,9 +283,9 @@ def main(url, scraped_data, regex_params, params):
 
                 else:
                     info["post interactions"] = txt
-
+            
             info = {}
-
+            
             # Divide data into Video and Recommendations
             you_may_like_index = block.find("You may like")
 
@@ -532,7 +541,6 @@ def main(url, scraped_data, regex_params, params):
         post_info['platform'] = platform
 
         formatted_output = post_info
-
         return formatted_output
     else:
         raise ValueError(f"Unsupported platform: {platform}")
@@ -541,9 +549,9 @@ def main(url, scraped_data, regex_params, params):
 if __name__ == "__main__":
 
     url = "https://www.tiktok.com/@kagan_dunlap/video/7452784466923228458"
-    scraped_data = """ 
+    scraped_data = """
 
-output:
+    output:
 
 Insurance Premiums for Trucks Transporting Fighter Jets | TikTok TikTokLog inTikTokSearchFor YouExploreFollowingUpload LIVEProfileMoreLog inCompanyProgramTerms & Policies© 2025 TikTok198.6K19048659397500:02 / 00:08kagan_dunlapKagan Dunlap · 2024-12-26FollowmoreHow high are the insurance premiums for a truck carrying a fighter jet? Shirt by @GruntStyle
 #fyp
@@ -578,25 +586,30 @@ rd #spaceforce #soldier #kagandunlap kagan_dunlap21.6K·2d ago DHS and the Penta
 
 @JENJENBASIL
     """
+    # regex_params = [
+    #         {
+    #             "field_name": "mentions",
+    #             "pattern": "@([\w\.-]+)",
+    #             "all_matches": True,
+    #             "AI_Prompt": None
+    #         },
+    #         # {
+    #         #     "field_name": "7eleven_slurpee",
+    #         #     "pattern": "7eleven", #"FREE\s*7-?Eleven\s+slurpee\s+on\s+\w+\s+\d+\s*\(no purchase\)\s*7eleven",
+    #         #     "all_matches": False,
+    #         #     "AI_Prompt ": None
+    #         # },
+    #         {
+    #             "field_name": "AI_mentions",
+    #             "pattern": None,
+    #             "all_matches": True,
+    #             "AI_Prompt": "Extract all mentions of creators (basically @USERNAME) from the text"
+    #         }
+    #     ]
+
     regex_params = [
-            {
-                "field_name": "mentions",
-                "pattern": "@([\w\.-]+)",
-                "all_matches": True,
-                "AI_Prompt": None
-            },
-            # {
-            #     "field_name": "7eleven_slurpee",
-            #     "pattern": "7eleven", #"FREE\s*7-?Eleven\s+slurpee\s+on\s+\w+\s+\d+\s*\(no purchase\)\s*7eleven",
-            #     "all_matches": False,
-            #     "AI_Prompt ": None
-            # },
-            {
-                "field_name": "AI_mentions",
-                "pattern": None,
-                "all_matches": True,
-                "AI_Prompt": "Extract all mentions of creators (basically @USERNAME) from the text"
-            }
+            '{"field_name": "mentions","pattern": "@([\w\.-]+)","all_matches": True, "AI_Prompt": None}',
+            '{"field_name": "AI_mentions", "pattern": None, "all_matches": True, "AI_Prompt": "Extract all mentions of creators (basically @USERNAME) from the text"}',
         ]
 
     output = main(url, scraped_data, regex_params, None)
