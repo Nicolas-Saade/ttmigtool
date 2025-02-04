@@ -500,7 +500,16 @@ def main(url, scraped_data, regex_params, params):
 
         return formatted_output
     else:
-        raise ValueError(f"Unsupported platform: {platform}")
+        print("Unsupported platform, Automated Extraction will be disblaed for this URL")
+        print("You can always use Custom regex patterns or the LLM to extract data")
+
+        info = {}
+
+        if regex_params:
+            apply_custom_regex(scraped_data, regex_params, info)
+
+        formatted_output = info
+        return formatted_output
     return formatted_output
 
 if __name__ == "__main__":
