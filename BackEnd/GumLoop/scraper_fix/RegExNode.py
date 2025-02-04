@@ -42,10 +42,11 @@ def main(url, scraped_data, params):
         """
         Extract information from a single post block.
         Returns a dictionary with keys:
+        #TODO: Check language conversion
         - creator handle
-        - video caption
+        - video caption --> Try to check language conversion
         - likes
-        - comments
+        - comments --> Try to check language conversion
         - reshares
         - hashtags
         - sound used
@@ -87,8 +88,6 @@ def main(url, scraped_data, params):
         else:
             info['sound used'] = None
 
-        # print("INFOOOO", info)
-        # print("\n\n\n")
         return info
 
     def extract_tiktok_post_info(block):
@@ -153,18 +152,26 @@ def main(url, scraped_data, params):
             
             def extract_tiktok_interactions(txt, info):
                 """
-                Extracts the number of likes, comments, and shares from a TikTok post.
+                Extracts the number of likes, only if K/.M is found, else 
+                the rest of the string is returned as "post interactions".
                 """
-                numbers = re.findall(r'(\d+(?:\.\d+)?[KM]?)', pre_timer)
-                # We expect numbers in order: likes, comments, bookmarks, shares.
-                if numbers and len(numbers) >= 4:
-                    info['likes'] = convert_number(numbers[0])
-                    info['comments'] = convert_number(numbers[1])
-                    info['bookmarks'] = convert_number(numbers[2])
-                    info['shares'] = convert_number(numbers[3])
+                match = re.search(r'\d+(?:\.\d+)?[KM]?', txt)
+
+                # Ensure we are capturing K and M of likes and nothing else
+                if match and match.start() <= 5: 
+                    likes = convert_number(match[0])
+                    remaining = txt.replace(match.group(0), "", 1).strip()
+
+                    return {
+                        "likes": likes,
+                        "post interactions": remaining
+                    }
+
                 else:
-                    info['post interactions'] = numbers
-                
+                    return {
+                        "post interactions": txt
+                    }
+
             info = {}
 
             # Divide data into Video and Recommendations
@@ -259,12 +266,13 @@ def main(url, scraped_data, params):
             info['sound used'] = sound_match if sound_match else None
 
             # Hashtags: Collect all hashtags from the entire block.
-            info['hashtags'] = set(re.findall(r'#(\w+)', block))
+            hashtah_matches = set(re.findall(r'#(\w+)', block))
+            info['hashtags'] = hashtah_matches if hashtah_matches else None
 
             # TikTok Recommendations: Capture everything after "You may like", if present.
             if you_may_like:
                 # Store raw "You may like" content
-                info["You May Like (RAW)"] = you_may_like.strip()
+                #info["You May Like (RAW)"] = you_may_like.strip()
                 
                 # Extract hashtags from recommendations
                 recommended_hashtags = set(re.findall(r'#(\w+)', you_may_like))
@@ -411,9 +419,6 @@ def main(url, scraped_data, params):
         second_muted = scraped_data.find(" is muted", first_muted + 1)
         block = scraped_data[first_muted + len(" is muted"):second_muted]
 
-        print("Identified blocks:", type(block))
-        print(block)
-
         post_info = extract_instagram_post_info(block)
         post_info['video_url'] = url
         post_info['platform'] = platform
@@ -430,14 +435,36 @@ def main(url, scraped_data, params):
 
 if __name__ == "__main__":
 
-    url = "https://www.tiktok.com/@veritasium/video/7220943300725886254?lang=en&q=veritasium&t=1737894631333"
+    url = "https://www.tiktok.com/@daily..motiv8tion/video/7445084532987972895"
     scraped_data = """ 
 
 output:
 
-Bicycle Wheel Physics: Which Way Will the Bike Move? | TikTok TikTokLog inTikTokSearchFor YouExploreFollowingUpload LIVEProfileMoreLog inCompanyProgramTerms & Policies© 2025 TikTok28.7K31196426200:02 / 00:46veritasiumVeritasium · 2023-4-11FollowmoreWhich way will the bike move? #physics original sound
-- VeritasiumYou may likePinnedHow ancient math revealed hidden universes #euclid #geometryveritasium196.6K·2024-11-19PinnedThe science of #bowling veritasium116.1K·2024-10-26PinnedThe Prisoner Riddleveritasium366.8K·2024-9-26How Does Super Glue Work?veritasium7049·1d ago How Was Super Glue Invented?veritasium7357·2d ago What black holes tell us about entropy #thermodynamics #astrophysics #stephenhawking #radiationveritasium2569·3d ago Why Is Super Glue So Strong?veritasium389.5K·4d ago What a Rubik's Cube teaches us about entropyveritasium7887·5d ago ENTROPY: Why does energy spread out over time?veritasium13.6K·1-24Why 100% efficiency is impossibleveritasium4067·1-23The one experiment that explains entropyveritasium38.1K·1-22This Tiny Robot Could Save Your Life #minirobot #robots #engineeringveritasium14.1K·1-21What does the Earth get from the sun? #entropy #physicsveritasium64.8K·1-20The insane math of the stock marketveritasium1943·1-19How a math genius solved the stock marketveritasium6573·1-18What the behaviour of molecules teaches us about moneyveritasium8976·1-17More videos311 commentsLog in to commentDr. Douglas Fartbox PhD Esq.Veritasium really struggling for new content eh? 🤦‍♂️2023-4-152ReplyView 1 replyJerry017Not sure I understand why anyone would ever bother doing this2023-4-1268ReplyView 14 replieslewisp222Lame…. Depends on gears and wheel traction2023-4-121727ReplyView 21 repliesmrbobraffertyI had to back pedal on my original answer2023-4-153ReplyView 4 repliesGXTry again in lowest gear2023-4-123ReplyView 6 repliesolduser8765309It’s because people do not listen to physics teachers. The object will go in the direction of the net force.2023-4-12103ReplyView 11 repliesLihtsalt JimmyBet it goes forward with the first gear, this is a test of gearing.2023-4-12533ReplyView 5 repliesBilly ButcherFree wheel or fixed wheel?2023-4-12103ReplyView 6 repliesKTMDidn’t know he was going to yank it like a mad man. 😂 Pull hard enough and it will fly 😂2023-4-152ReplyAbhishekbro it depends upon what type of cycle you using if it was normal bike without gear it wil go forward because of friction on gear on it go backwards2023-6-251ReplyNelson MarquesWill a bike without a free hub make any difference?2023-4-122Replybig_cox_diydo it on a bike that doesn't have free wheeling hubs2023-4-122ReplyRakawell
-the pull force is more than the tire traction.2023-4-124Replyiskander8652Its depends on gear2023-4-123ReplySimon Says🤦✅2023-4-142ReplyRafabro try fixed gear2023-4-162Replydefinitelynotsarcasticbackwards because the rear wheel has a freewheeling hub2023-4-172Replyicelord 90not enough weight on bike to go forward2023-4-124Reply
+Start Loving Yourself for a Successful Life | TikTok TikTokLog inTikTokSearchFor YouExploreFollowingUpload LIVEProfileMoreLog inCompanyProgramTerms & Policies© 2025 TikTok12.4K31224980500:03 / 00:18daily..motiv8tiondailymotiv8tion · 2024-12-6FollowmoreA successful life starts off by loving yourself more.!
+#motivation
+#motivational
+#motivationalvideo
+#motivationalquotes
+#motivated
+#thatmexicanot
+#fyp
+#viral
+Freedom - Pharrell WilliamsYou may likePinnedIf you want to be successful Surround yourself with people who are successful. #motivation #motivational #motivationalvideo #motivationalquotes #motivated #50cent #fyp #viral daily..motiv8tion3281·2024-12-28PinnedDrop your ego
+&
+Start #motivation #motivational #motivationalvideo #motivationalquotes #motivated #CapCut daily..motiv8tion1648·2024-11-21Stop half assing it and give it your all.!! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #mathewmcconaughey #fyp #viral daily..motiv8tion412·4d ago Motivate your mind and your body. #motivation #motivational #motivationalvideo #motivationalquotes #motivated #jimcarrey #fyp #viral daily..motiv8tion89·1-15If you’re in your 20s this is for you.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #rainnwilson #fyp #viral daily..motiv8tion659·1-8Let’s get this money 2025 is your year.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #rickross #fyp #viral daily..motiv8tion75·1-1Sometimes just being p
+
+
+...
+...
+...
+...
+
+
+08·2024-12-20Stop being so hard on yourself.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #theovon #postmalone #fyp #viral daily..motiv8tion542·2024-12-20Be the miracle. #motivation #motivational #motivationalvideo #motivationalquotes #motivated #morganfreeman #fyp #viral daily..motiv8tion114·2024-12-18Theo von believes in god.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #motivated #theovon #fyp #viral daily..motiv8tion395·2024-12-17Joker is that guy
+#motivation #motivational #motivationalvideo #motivationalquotes #motivated #jauqinphonenix #fyp #viral daily..motiv8tion33·2024-12-15Sometimes in life things get hard but you have to continue and grind!
+#motivation #motivational #motivationalvideo #motivationalquotes #motivated #ishowspeed #fyp #viral daily..motiv8tion54·2024-12-14Nobody thinks what its like to be the other guy.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #joker #tylerthecreator #fyp #viral daily..motiv8tion41·2024-12-13You can fail at what you dont want!
+So you might as well take a chance on doing what you love! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #jimcarrey #fyp #viral daily..motiv8tion126·2024-12-12God has a purpose for you Its up to you to go out and find it. #motivation #motivational #motivationalvideo #motivationalquotes #motivated #theovon #fyp #viral daily..motiv8tion67·2024-12-11More videos31 commentsLog in to comment
+[34mThe logs here have been shortened for readability. Try clicking 'View Inputs' or 'View Outputs' to see the complete inputs or outputs for this node.[0m
     """
     params = {}
 
