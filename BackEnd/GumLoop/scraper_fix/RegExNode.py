@@ -56,13 +56,13 @@ def main(url, scraped_data, params):
         # Extract creator handle (e.g., "brianpils" in "brianpils•Follow") --> before .Follow
         # WARNING: what if already followed? --> WebScraper never has anyone followed
         creator_match = re.search(r'([\w\.\d_]+)•Follow', block)
-        info['creator handle'] = creator_match.group(1) if creator_match else None
+        info['creator handle'] = creator_match.group(1).replace("\n", " ") if creator_match else None
 
         # Extract video caption: take text after '•Follow' and before '… more' 
         # WARNING what if already followed? --> WebScraper never has anyone followed
         caption_match = re.search(r'•Follow(.*?)… more', block, re.DOTALL)
         caption = caption_match.group(1).strip() if caption_match else None
-        info['video caption'] = caption
+        info['video caption'] = caption.replace("\n", " ")
 
         # Extract likes ( first occurrence of "Like" followed by number)
         likes_match = re.search(r'Like([\d,\.K]+)', block)
@@ -84,7 +84,7 @@ def main(url, scraped_data, params):
         sound_match = re.search(r'moreAudio(.*?)(?=Play button)', block)
         if sound_match:
             sound = sound_match.group(1).strip()
-            info['sound used'] = sound
+            info['sound used'] = sound.replace("\n", " ")
         else:
             info['sound used'] = None
 
@@ -155,22 +155,20 @@ def main(url, scraped_data, params):
                 Extracts the number of likes, only if K/.M is found, else 
                 the rest of the string is returned as "post interactions".
                 """
-                match = re.search(r'\d+(?:\.\d+)?[KM]?', txt)
+                match = re.search(r'\d+(?:\.\d+)?[KM]', txt)
 
                 # Ensure we are capturing K and M of likes and nothing else
+                print(match)
+                print("In", txt)
                 if match and match.start() <= 5: 
                     likes = convert_number(match[0])
                     remaining = txt.replace(match.group(0), "", 1).strip()
 
-                    return {
-                        "likes": likes,
-                        "post interactions": remaining
-                    }
+                    info["likes"] = likes
+                    info["post interactions"] = remaining
 
                 else:
-                    return {
-                        "post interactions": txt
-                    }
+                    info["post interactions"] = txt
 
             info = {}
 
@@ -210,7 +208,7 @@ def main(url, scraped_data, params):
                 caption = first_entry.split("| TikTok")[0].strip()
             else:
                 caption = first_entry
-            info['video caption'] = caption
+            info['video caption'] = caption.replace("\n", " ")
 
             # Extract the timer from the remaining block.
             timer_pattern = re.compile(r'\d\d:\d\d\s*/\s*\d\d:\d\d')
@@ -257,13 +255,13 @@ def main(url, scraped_data, params):
             extract_tiktok_interactions(pre_timer, info)
 
             # The creator handle should be in the post_timer part.
-            info['creator handle'] = post_timer if post_timer else None
+            info['creator handle'] = post_timer.replace("\n", " ") if post_timer else None
 
             # Sound Used: Look for a line containing "original sound -"
             sound_match = extract_tiktok_sound_used(block)
             if not sound_match:
                 sound_match = extract_tiktok_sound_used(cached_block)
-            info['sound used'] = sound_match if sound_match else None
+            info['sound used'] = sound_match.replace("\n", " ") if sound_match else None
 
             # Hashtags: Collect all hashtags from the entire block.
             hashtah_matches = set(re.findall(r'#(\w+)', block))
@@ -464,6 +462,15 @@ Start #motivation #motivational #motivationalvideo #motivationalquotes #motivate
 #motivation #motivational #motivationalvideo #motivationalquotes #motivated #jauqinphonenix #fyp #viral daily..motiv8tion33·2024-12-15Sometimes in life things get hard but you have to continue and grind!
 #motivation #motivational #motivationalvideo #motivationalquotes #motivated #ishowspeed #fyp #viral daily..motiv8tion54·2024-12-14Nobody thinks what its like to be the other guy.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #joker #tylerthecreator #fyp #viral daily..motiv8tion41·2024-12-13You can fail at what you dont want!
 So you might as well take a chance on doing what you love! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #jimcarrey #fyp #viral daily..motiv8tion126·2024-12-12God has a purpose for you Its up to you to go out and find it. #motivation #motivational #motivationalvideo #motivationalquotes #motivated #theovon #fyp #viral daily..motiv8tion67·2024-12-11More videos31 commentsLog in to comment
+[34mThe logs here have been shortened for readability. Try clicking 'View Inputs' or 'View Outputs' to see the complete inputs or outputs for this node.[0m
+
+...
+...
+...
+...
+
+
+rd #spaceforce #soldier #kagandunlap kagan_dunlap21.6K·2d ago DHS and the Pentagon will be establishing a Detention Center in Guantanamo Bay capable of housing 30,000 people Migrants. #fyp #fypシ #foryou #foryoupage #miltok #military #army #navy #airforce #marinecorps #usmarines #marine #coastguard #spaceforce #soldier #kagandunlap kagan_dunlap1953·2d ago The Laken Riley Act has been signed into law by President Trump. kagan_dunlap6224·2d ago An American Airlines Flight Crashed into a Blackhawk helicopter in Washington DC.kagan_dunlap68.4K·3d ago Is this what light stage capitalism looks like? #fyp #fypシ #foryou #foryoupage #miltok #military #army #navy #airforce #marinecorps #usmarines #marine #coastguard #spaceforce #soldier #kagandunlap kagan_dunlap6530·3d ago The Pigs of Ukraine. #fyp #fypシ #foryou #foryoupage #miltok #military #army #navy #airforce #marinecorps #usmarines #marine #coastguard #spaceforce #soldier #kagandunlap kagan_dunlap12.3K·3d ago China’s Robot Dog workforce. kagan_dunlap2873·3d ago Bro pulled that right out of his inventory. kagan_dunlap337.1K·3d ago Turns out, Representative Nancy Mace was the first female to graduate from the Citadel. #fyp #fypシ #foryou #foryoupage #miltok #military #army #navy #airforce #marinecorps #usmarines #marine #coastguard #spaceforce #soldier #kagandunlap kagan_dunlap8149·3d ago DOGE Claims that they are currently saving the Government $1 Billion dollars a day.kagan_dunlap3410·3d ago More videos1904 commentsLog in to comment
 [34mThe logs here have been shortened for readability. Try clicking 'View Inputs' or 'View Outputs' to see the complete inputs or outputs for this node.[0m
     """
     params = {}
