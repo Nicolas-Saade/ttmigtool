@@ -128,14 +128,12 @@ def main(url, scraped_data, params):
                     re.IGNORECASE | re.DOTALL
                 )
                 match = sound_pattern.search(block)
-
                 if match:
-                    sound_text = match.group(1).strip()
+                    sound_text = match.group().strip()
                     if sound_text:
                         return sound_text
 
                 # Fallback: Look for "You may like" and use the text before it.
-
                 you_may_like_index = block.find("You may like")
 
                 if you_may_like_index != -1:
@@ -153,8 +151,34 @@ def main(url, scraped_data, params):
 
                 return None  # Return None if "You may like" was not found
             
+            def extract_tiktok_interactions(txt, info):
+                """
+                Extracts the number of likes, comments, and shares from a TikTok post.
+                """
+                numbers = re.findall(r'(\d+(?:\.\d+)?[KM]?)', pre_timer)
+                # We expect numbers in order: likes, comments, bookmarks, shares.
+                if numbers and len(numbers) >= 4:
+                    info['likes'] = convert_number(numbers[0])
+                    info['comments'] = convert_number(numbers[1])
+                    info['bookmarks'] = convert_number(numbers[2])
+                    info['shares'] = convert_number(numbers[3])
+                else:
+                    info['post interactions'] = numbers
+                
             info = {}
-            
+
+            # Divide data into Video and Recommendations
+            you_may_like_index = block.find("You may like")
+
+            if you_may_like_index != -1:
+                cached_block = block
+                block = block[:you_may_like_index]
+                you_may_like = cached_block[you_may_like_index:]
+            else:
+                cached_block = block
+                block = block
+                you_may_like = ""
+
             # 1. Extract the first entry:
             #    Everything from the beginning until the marker "& Policies© 2025 TikTok"
             policy_marker = "& Policies© 2025 TikTok"
@@ -168,10 +192,10 @@ def main(url, scraped_data, params):
             block = remainder
 
             # Clean up first_entry:
-            # Remove newline characters/spaces/"output".
+            # Remove newline characters/spaces/"output"
             first_entry = " ".join(first_entry.split())
-            if first_entry.lower().strip("\"").startswith(" output:"):
-                first_entry = first_entry[len(" output: "):].strip()
+            if first_entry.lower().strip().strip("\"").startswith(" output:") or first_entry.lower().strip().strip("\"").startswith("output:"):
+                first_entry = first_entry[len(" output:"):].strip()
 
             # Extract the video caption from first entry.
             # The caption is everything from the beginning until the substring "| TikTok"
@@ -201,7 +225,7 @@ def main(url, scraped_data, params):
                     # Remove the extracted second_entry and the marker from block.
                     part_before = block[:start_index]
                     part_after = block[end_index + len(" · "):]
-                    # TODO Maybe remove more strings from this block?
+                    # TODO Maybe remove more strings from this block? Maybe check for 5 no sound appearing
                     block = (part_before + part_after).strip()
             else:
                 second_entry = ""
@@ -222,37 +246,29 @@ def main(url, scraped_data, params):
                 post_timer = ""
             
             # Now, extract number-like tokens from pre_timer.
-            numbers = re.findall(r'(\d+(?:\.\d+)?[KM]?)', pre_timer)
-            # We expect numbers in order: likes, comments, bookmarks, shares.
-            # TODO pattern matching for likes, comments, bookmarks, shares can be improved
-            if numbers and len(numbers) >= 4:
-                info['likes'] = convert_number(numbers[0])
-                info['comments'] = convert_number(numbers[1])
-                info['bookmarks'] = convert_number(numbers[2])
-                info['shares'] = convert_number(numbers[3])
-            else:
-                info['post interactions'] = numbers
+            # Format: [likes][comments][bookmarks][shares][timer]
+            extract_tiktok_interactions(pre_timer, info)
 
             # The creator handle should be in the post_timer part.
             info['creator handle'] = post_timer if post_timer else None
 
             # Sound Used: Look for a line containing "original sound -"
-            # TODO can also maybe improve a bit on this.
             sound_match = extract_tiktok_sound_used(block)
+            if not sound_match:
+                sound_match = extract_tiktok_sound_used(cached_block)
             info['sound used'] = sound_match if sound_match else None
 
             # Hashtags: Collect all hashtags from the entire block.
             info['hashtags'] = set(re.findall(r'#(\w+)', block))
 
             # TikTok Recommendations: Capture everything after "You may like", if present.
-            # TODO, this can also be improved.
-            rec_marker = "You may like"
-            rec_index = block.find(rec_marker)
-            if rec_index != -1:
-                recommendations = block[rec_index + len(rec_marker):].strip()
-                info["TikTok Recommendations"] = recommendations if recommendations else None
-            else:
-                info["TikTok Recommendations"] = None
+            if you_may_like:
+                # Store raw "You may like" content
+                info["You May Like (RAW)"] = you_may_like.strip()
+                
+                # Extract hashtags from recommendations
+                recommended_hashtags = set(re.findall(r'#(\w+)', you_may_like))
+                info["Recommended Hashtags"] = recommended_hashtags if recommended_hashtags else set()
 
             return info
 
@@ -414,15 +430,14 @@ def main(url, scraped_data, params):
 
 if __name__ == "__main__":
 
-    url = "https://www.instagram.com/reels/DFiM1rjs7ZX/?hl=en"
+    url = "https://www.tiktok.com/@veritasium/video/7220943300725886254?lang=en&q=veritasium&t=1737894631333"
     scraped_data = """ 
 
 output:
 
-Instagram
-InstagramLog InSign UpAudio is mutedjadnasrr•Followلما تحاول تلطف جو 🙂😂 لاتنسو الفولو ❤️‍🔥… moreAudio imagejadnasrr · Original audioPlay button iconLike5,682Comment205ShareMoreAudio is mutednick.digiovanni•FollowRatatouille IRLRatatouille IRL… moreAudio imagenick.digiovanni · Original audioPlay button iconLike393KComment1,645ShareMoreAudio is mutedthepointerbrothers•Followand the games always last 45 mins 😭😂 #thepointerbrothersand the games always last 45 mins 😭😂 #thepointerbrothers… moreAudio imagehits_dingers14 · Original audiohits_dingers14 · Original audioTagged users2 peoplePlay button iconLike522KComment623ShareMoreAudio is mutedjeanie3legs•FollowTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddogTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddog… moreAudio imagedadjokescentralofficial · Original audiodadjokescentralofficial · Original audioPlay button iconLike103KComment963ShareMore
-
-InstagramLog InSign UpAudio is mutedjadnasrr•Followلما تحاول تلطف جو 🙂😂 لاتنسو الفولو ❤️‍🔥… moreAudio imagejadnasrr · Original audioPlay button iconLike5,682Comment205ShareMoreAudio is mutednick.digiovanni•FollowRatatouille IRLRatatouille IRL… moreAudio imagenick.digiovanni · Original audioPlay button iconLike393KComment1,645ShareMoreAudio is mutedthepointerbrothers•Followand the games always last 45 mins 😭😂 #thepointerbrothersand the games always last 45 mins 😭😂 #thepointerbrothers… moreAudio imagehits_dingers14 · Original audioTagged users2 peoplePlay button iconLike522KComment623ShareMoreAudio is mutedjeanie3legs•FollowTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddogTrue story 😂 #pippadog #dawnstoughongrease #smilingdog #threeleggeddog… moreAudio imagedadjokescentralofficial · Original audioPlay button iconLike103KComment963ShareMore
+Bicycle Wheel Physics: Which Way Will the Bike Move? | TikTok TikTokLog inTikTokSearchFor YouExploreFollowingUpload LIVEProfileMoreLog inCompanyProgramTerms & Policies© 2025 TikTok28.7K31196426200:02 / 00:46veritasiumVeritasium · 2023-4-11FollowmoreWhich way will the bike move? #physics original sound
+- VeritasiumYou may likePinnedHow ancient math revealed hidden universes #euclid #geometryveritasium196.6K·2024-11-19PinnedThe science of #bowling veritasium116.1K·2024-10-26PinnedThe Prisoner Riddleveritasium366.8K·2024-9-26How Does Super Glue Work?veritasium7049·1d ago How Was Super Glue Invented?veritasium7357·2d ago What black holes tell us about entropy #thermodynamics #astrophysics #stephenhawking #radiationveritasium2569·3d ago Why Is Super Glue So Strong?veritasium389.5K·4d ago What a Rubik's Cube teaches us about entropyveritasium7887·5d ago ENTROPY: Why does energy spread out over time?veritasium13.6K·1-24Why 100% efficiency is impossibleveritasium4067·1-23The one experiment that explains entropyveritasium38.1K·1-22This Tiny Robot Could Save Your Life #minirobot #robots #engineeringveritasium14.1K·1-21What does the Earth get from the sun? #entropy #physicsveritasium64.8K·1-20The insane math of the stock marketveritasium1943·1-19How a math genius solved the stock marketveritasium6573·1-18What the behaviour of molecules teaches us about moneyveritasium8976·1-17More videos311 commentsLog in to commentDr. Douglas Fartbox PhD Esq.Veritasium really struggling for new content eh? 🤦‍♂️2023-4-152ReplyView 1 replyJerry017Not sure I understand why anyone would ever bother doing this2023-4-1268ReplyView 14 replieslewisp222Lame…. Depends on gears and wheel traction2023-4-121727ReplyView 21 repliesmrbobraffertyI had to back pedal on my original answer2023-4-153ReplyView 4 repliesGXTry again in lowest gear2023-4-123ReplyView 6 repliesolduser8765309It’s because people do not listen to physics teachers. The object will go in the direction of the net force.2023-4-12103ReplyView 11 repliesLihtsalt JimmyBet it goes forward with the first gear, this is a test of gearing.2023-4-12533ReplyView 5 repliesBilly ButcherFree wheel or fixed wheel?2023-4-12103ReplyView 6 repliesKTMDidn’t know he was going to yank it like a mad man. 😂 Pull hard enough and it will fly 😂2023-4-152ReplyAbhishekbro it depends upon what type of cycle you using if it was normal bike without gear it wil go forward because of friction on gear on it go backwards2023-6-251ReplyNelson MarquesWill a bike without a free hub make any difference?2023-4-122Replybig_cox_diydo it on a bike that doesn't have free wheeling hubs2023-4-122ReplyRakawell
+the pull force is more than the tire traction.2023-4-124Replyiskander8652Its depends on gear2023-4-123ReplySimon Says🤦✅2023-4-142ReplyRafabro try fixed gear2023-4-162Replydefinitelynotsarcasticbackwards because the rear wheel has a freewheeling hub2023-4-172Replyicelord 90not enough weight on bike to go forward2023-4-124Reply
     """
     params = {}
 
