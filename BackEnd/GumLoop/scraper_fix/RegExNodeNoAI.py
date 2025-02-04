@@ -6,8 +6,6 @@ def main(url, scraped_data, regex_params, params):
     from pprint import pprint
     import dotenv
     import os
-    import requests
-    import json
     
     dotenv.load_dotenv()
     
@@ -15,9 +13,6 @@ def main(url, scraped_data, regex_params, params):
     api_header = os.getenv("HEADER")
     payload = os.getenv("PAYLOAD")
     api_url = os.getenv("API_URL")
-    gemini_api_key = os.getenv("GEMINI_API_KEY")
-
-    gemini_api_url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={gemini_api_key}"
 
     def convert_number(num_str):
         """
@@ -43,55 +38,9 @@ def main(url, scraped_data, regex_params, params):
         except ValueError:
             return num_str
 
-    def generate_regex_pattern(field_name, text, all_matches, AI_Prompt):
-        """
-        Generate a regex pattern with given inputs, using LLMs/AI.
-        """
-        # Use a snippet of the text for context
-        text_snippet = text[:500]
-        # Build the prompt.
-        # We include the field name, the context (snippet), whether we want all matches or not,
-        # and the AI prompt provided by the user.
-        prompt = (
-            f"<System Prompt>\n"
-            f"Generate a regex pattern to extract a field that we will call '{field_name}' from some text.\n"
-            f"You should only generate the regex pattern to pattern match with without any additional commentary (evn without the r before the pattern).\n"
-            f"The regex pattern should a string, that if applied correctly answers to the user requirement that you will find below.\n"
-            f"Context (NOT THE FULL FILE, JUST THE A SNIPPET FOR CONTEXT): {text_snippet}\n"
-            f"User Requirement: {AI_Prompt}\n"
-            f"This pattern will be called using {'re.findall' if all_matches else 're.search'} mode, so try to optimize for that.\n"
-            f"Return only the regex pattern as output, with no additional commentary."
-            f"\n</System Prompt>"
-        )
-
-        headers = {
-            "Content-Type": "application/json"
-        }
-        
-        data = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": prompt}
-                    ]
-                }
-            ]
-        }
-
-        response = requests.post(gemini_api_url, headers=headers, data=json.dumps(data))
-    
-        if response.status_code == 200:
-            result = response.json()
-            # Add a small delay to ensure response is fully processed (async operation NA)
-            import time
-            time.sleep(0.1)
-            return result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "No response")
-        else:
-            return f"Error: {response.status_code}, {response.text}"
-
     def apply_custom_regex(text, regex_patterns, info_dict):
         """
-        Apply custom regex patterns (AI generated or regular ones) to text and add results to existing dictionary.
+        Apply custom regex patterns to text and add results to existing dictionary.
         
         Args:
             text (str): Text to apply regex patterns to
@@ -99,9 +48,8 @@ def main(url, scraped_data, regex_params, params):
                 [
                     {
                         "field_name": "custom_field_1",
-                        "pattern": "regex_pattern_1"/ None, # If None, the regex pattern is AI generated
+                        "pattern": "regex_pattern_1",
                         "all_matches": True/False  # If True, findall() is used instead of search()
-                        "AI_Prompt": "Prompt for AI to generate regex pattern" # If None, the regex pattern is provided by the user
                     },
                     ...
                 ]
@@ -114,19 +62,11 @@ def main(url, scraped_data, regex_params, params):
             print(pattern_info)
             try:
                 field_name = pattern_info.get("field_name")
-                pattern = pattern_info.get("pattern") if pattern_info.get("pattern") else None
+                pattern = pattern_info.get("pattern")
                 all_matches = pattern_info.get("all_matches", False)
-                AI_Prompt = pattern_info.get("AI_Prompt") if pattern_info.get("AI_Prompt") else None
-
-                if not field_name or (not pattern and not AI_Prompt) or (pattern and AI_Prompt):
+                
+                if not field_name or not pattern:
                     continue
-
-                if AI_Prompt:
-                    pattern = generate_regex_pattern(field_name, text, all_matches, AI_Prompt)
-                    if pattern == "No response" or not pattern:
-                        print(f"Error generating regex pattern for field '{field_name}': {pattern}")
-                        info_dict[field_name] = None
-                        continue
                     
                 full_pattern = rf"{pattern}"
                     
@@ -379,7 +319,7 @@ def main(url, scraped_data, regex_params, params):
                 
                 # Extract hashtags from recommendations
                 recommended_hashtags = set(re.findall(r'#(\w+)', you_may_like))
-                info["Recommended Hashtags"] = recommended_hashtags if recommended_hashtags else set()
+                info["Recommended Hashtags"] = recommended_hashtags if recommended_hashtags else None
 
             # Apply custom regex patterns if provided in params
             if regex_params:
@@ -543,6 +483,7 @@ if __name__ == "__main__":
     url = "https://www.tiktok.com/@kagan_dunlap/video/7452784466923228458"
     scraped_data = """ 
 
+
 output:
 
 Insurance Premiums for Trucks Transporting Fighter Jets | TikTok TikTokLog inTikTokSearchFor YouExploreFollowingUpload LIVEProfileMoreLog inCompanyProgramTerms & Policies© 2025 TikTok198.6K19048659397500:02 / 00:08kagan_dunlapKagan Dunlap · 2024-12-26FollowmoreHow high are the insurance premiums for a truck carrying a fighter jet? Shirt by @GruntStyle
@@ -582,20 +523,12 @@ rd #spaceforce #soldier #kagandunlap kagan_dunlap21.6K·2d ago DHS and the Penta
             {
                 "field_name": "mentions",
                 "pattern": "@([\w\.-]+)",
-                "all_matches": True,
-                "AI_Prompt": None
+                "all_matches": True
             },
-            # {
-            #     "field_name": "7eleven_slurpee",
-            #     "pattern": "7eleven", #"FREE\s*7-?Eleven\s+slurpee\s+on\s+\w+\s+\d+\s*\(no purchase\)\s*7eleven",
-            #     "all_matches": False,
-            #     "AI_Prompt ": None
-            # },
             {
-                "field_name": "AI_mentions",
-                "pattern": None,
-                "all_matches": True,
-                "AI_Prompt": "Extract all mentions of creators (basically @USERNAME) from the text"
+                "field_name": "7eleven_slurpee",
+                "pattern": "7eleven", #"FREE\s*7-?Eleven\s+slurpee\s+on\s+\w+\s+\d+\s*\(no purchase\)\s*7eleven",
+                "all_matches": False
             }
         ]
 
