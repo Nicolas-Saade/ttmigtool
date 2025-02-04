@@ -38,7 +38,49 @@ def main(url, scraped_data, params):
         except ValueError:
             return num_str
 
-    def extract_instagram_post_info(block):
+    def apply_custom_regex(text, regex_patterns, info_dict):
+        """
+        Apply custom regex patterns to text and add results to existing dictionary.
+        
+        Args:
+            text (str): Text to apply regex patterns to
+            regex_patterns (list): List of dicts with format:
+                [
+                    {
+                        "field_name": "custom_field_1",
+                        "pattern": "regex_pattern_1",
+                        "all_matches": True/False  # If True, findall() is used instead of search()
+                    },
+                    ...
+                ]
+            info_dict (dict): Dictionary to add the custom fields to
+                
+        Returns:
+            None (modifies info_dict in place)
+        """
+        for pattern_info in regex_patterns:
+            try:
+                field_name = pattern_info.get("field_name")
+                pattern = pattern_info.get("pattern")
+                all_matches = pattern_info.get("all_matches", False)
+                
+                if not field_name or not pattern:
+                    continue
+                    
+                full_pattern = rf"{pattern}"
+                    
+                if all_matches:
+                    matches = re.findall(full_pattern, text)
+                    info_dict[field_name] = set(matches) if matches else None
+                else:
+                    match = re.search(full_pattern, text)
+                    info_dict[field_name] = match.group(1) if match and match.groups() else match.group(0) if match else None
+                    
+            except re.error as e:
+                print(f"Invalid regex pattern for field '{field_name}': {e}")
+                info_dict[field_name] = None
+
+    def extract_instagram_post_info(block, cached_scraped_data):
         """
         Extract information from a single post block.
         Returns a dictionary with keys:
@@ -87,6 +129,10 @@ def main(url, scraped_data, params):
             info['sound used'] = sound.replace("\n", " ")
         else:
             info['sound used'] = None
+
+        # Apply custom regex patterns if provided in params
+        if regex_params:
+            apply_custom_regex(cached_scraped_data, regex_params, info)
 
         return info
 
@@ -274,9 +320,13 @@ def main(url, scraped_data, params):
                 recommended_hashtags = set(re.findall(r'#(\w+)', you_may_like))
                 info["Recommended Hashtags"] = recommended_hashtags if recommended_hashtags else set()
 
+            # Apply custom regex patterns if provided in params
+            if regex_params:
+                apply_custom_regex(cached_block, regex_params, info)
+
             return info
 
-    def invalid_output(block, platform):
+    def invalid_output(scraped_data, platform):
         """
         Check if the scraped_data is invalid.
         
@@ -406,6 +456,8 @@ def main(url, scraped_data, params):
             #     return formatted_output
             # return "Invalid scraped data"
 
+        cached_scraped_data = scraped_data
+
         # Use known "is muted" point to delimit the single 
         # post that we are extracting data for--> Checked that Instagram reels
         # Always start out as muted:
@@ -414,31 +466,41 @@ def main(url, scraped_data, params):
         second_muted = scraped_data.find(" is muted", first_muted + 1)
         block = scraped_data[first_muted + len(" is muted"):second_muted]
 
-        post_info = extract_instagram_post_info(block)
+        post_info = extract_instagram_post_info(block, cached_scraped_data)
         post_info['video_url'] = url
         post_info['platform'] = platform
 
-        formatted_output.append(post_info)
+        formatted_output = post_info
 
-        for attempt in formatted_output:
-            if attempt['likes'] and attempt['comments'] and attempt['creator handle']:
-                formatted_output = attempt
-                return formatted_output
+        return formatted_output
     else:
         raise ValueError(f"Unsupported platform: {platform}")
     return formatted_output
 
 if __name__ == "__main__":
 
-    url = "https://www.tiktok.com/@loganpaul/photo/7465017501013871918?q=logan%20paul&t=1738653847846"
+    url = "https://www.instagram.com/reels/DFN0UPQvIww/?hl=en"
     scraped_data = """ 
 
-March 27 on @Max @Jake Paul | max | TikTok Skip to content feedTikTokLog inTikTokSearchFor YouExploreFollowingUpload LIVEProfileMoreLog inCompanyProgramTerms & Policies© 2025 TikTok179.8K163210.3K35.3KloganpaulLogan Paul · 6d ago FollowThe moment you’ve waited a decade for…moreMarch 27 on @Max
-@Jake Paul
-M83 Solitude - Grace
-    """
-    params = {}
+output:
 
-    output = main(url, scraped_data, params)
+Instagram
+InstagramLog InSign UpAudio is mutedsullyfinlay•FollowIf you didn't get the full weather report, did you even meet???… moreAudio imagesullyfinlay · Original audioPlay button iconLike8,972Comment72ShareMoreAudio is mutedgauravguptaofficial•FollowACROSS THE FLAME | Paris Couture Week SS '25 … moreAudio imagegauravguptaofficial · Original audiogauravguptaofficial · Original audioLocationParis, FrancePlay button iconLike221KComment2,458ShareMoreAudio is mutedaminshaykho•FollowWant free food? Follow me @aminshaykho 🙌🏻 FREE 7-Eleven slurpee on January 31 (no purchase) 🥤 #7eleven #fastfoodWant free food? Follow me @aminshaykho 🙌🏻 FREE 7-Eleven slurpee on January 31 (no purchase) 🥤 @bianca @MrBeast, @espn, @loganpaul #7eleven #fastfood… moreAudio imageaminshaykho · Original audioPlay button iconLike177KComment773ShareMoreAudio is mutedbarstoolsports•FollowDude got sent into the earths core @barstoolgametimeDude got sent into the earths core @barstoolgametime… moreAudio imagebarstoolsports · Original audiobarstoolsports · Original audioTagged userschubbzzzz69Play button iconLike873KComment1,104ShareMoreAudio is mutedaivanelli•FollowThe entire plane 😷The entire plane 😷… moreAudio imageaivanelli · Original audioPlay button iconLike1.8MComment36.2KShareMore
+InstagramLog InSign UpAudio is mutedsullyfinlay•FollowIf you didn't get the full weather report, did you even meet???… moreAudio imagesullyfinlay · Original audioPlay button iconLike8,972Comment72ShareMoreAudio is mutedgauravguptaofficial•FollowACROSS THE FLAME | Paris Couture Week SS '25 … moreAudio imagegauravguptaofficial · Original audioLocationParis, FrancePlay button iconLike221KComment2,458ShareMoreAudio is mutedaminshaykho•FollowWant free food? Follow me @aminshaykho 🙌🏻 FREE 7-Eleven slurpee on January 31 (no purchase) 🥤 #7eleven #fastfoodWant free food? Follow me @aminshaykho 🙌🏻 FREE 7-Eleven slurpee on January 31 (no purchase) 🥤 #7eleven #fastfood… moreAudio imageaminshaykho · Original audioPlay button iconLike177KComment773ShareMoreAudio is mutedbarstoolsports•FollowDude got sent into the earths core @barstoolgametimeDude got sent into the earths core @barstoolgametime… moreAudio imagebarstoolsports · Original audioTagged userschubbzzzz69Play button iconLike873KComment1,104ShareMoreAudio is mutedaivanelli•FollowThe entire plane 😷The entire plane 😷… moreAudio imageaivanelli · Original audioPlay button iconLike1.8MComment36.2KShareMore
+    """
+    regex_params = [
+            {
+                "field_name": "mentions",
+                "pattern": "@([\w\.-]+)",
+                "all_matches": True
+            },
+            {
+                "field_name": "7eleven_slurpee",
+                "pattern": "7eleven", #"FREE\s*7-?Eleven\s+slurpee\s+on\s+\w+\s+\d+\s*\(no purchase\)\s*7eleven",
+                "all_matches": False
+            }
+        ]
+
+    output = main(url, scraped_data, regex_params)
     from pprint import pprint
     pprint(output)
