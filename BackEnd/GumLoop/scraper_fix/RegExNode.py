@@ -158,8 +158,6 @@ def main(url, scraped_data, params):
                 match = re.search(r'\d+(?:\.\d+)?[KM]', txt)
 
                 # Ensure we are capturing K and M of likes and nothing else
-                print(match)
-                print("In", txt)
                 if match and match.start() <= 5: 
                     likes = convert_number(match[0])
                     remaining = txt.replace(match.group(0), "", 1).strip()
@@ -303,6 +301,7 @@ def main(url, scraped_data, params):
 
             timer_pattern = re.compile(r'\d\d:\d\d\s*/\s*\d\d:\d\d')
             if not timer_pattern.search(scraped_data):
+                print("URL points to a TikTok Image")
                 return True
 
         elif platform == "instagram":
@@ -333,8 +332,6 @@ def main(url, scraped_data, params):
         try:
             with urllib.request.urlopen(req) as response:
                 result = response.read().decode("utf-8")
-                print("API call succeeded. Response:")
-                print(result)
                 return result
         except urllib.error.HTTPError as e:
             err = e.read().decode("utf-8")
@@ -433,45 +430,12 @@ def main(url, scraped_data, params):
 
 if __name__ == "__main__":
 
-    url = "https://www.tiktok.com/@daily..motiv8tion/video/7445084532987972895"
+    url = "https://www.tiktok.com/@loganpaul/photo/7465017501013871918?q=logan%20paul&t=1738653847846"
     scraped_data = """ 
 
-output:
-
-Start Loving Yourself for a Successful Life | TikTok TikTokLog inTikTokSearchFor YouExploreFollowingUpload LIVEProfileMoreLog inCompanyProgramTerms & Policies© 2025 TikTok12.4K31224980500:03 / 00:18daily..motiv8tiondailymotiv8tion · 2024-12-6FollowmoreA successful life starts off by loving yourself more.!
-#motivation
-#motivational
-#motivationalvideo
-#motivationalquotes
-#motivated
-#thatmexicanot
-#fyp
-#viral
-Freedom - Pharrell WilliamsYou may likePinnedIf you want to be successful Surround yourself with people who are successful. #motivation #motivational #motivationalvideo #motivationalquotes #motivated #50cent #fyp #viral daily..motiv8tion3281·2024-12-28PinnedDrop your ego
-&
-Start #motivation #motivational #motivationalvideo #motivationalquotes #motivated #CapCut daily..motiv8tion1648·2024-11-21Stop half assing it and give it your all.!! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #mathewmcconaughey #fyp #viral daily..motiv8tion412·4d ago Motivate your mind and your body. #motivation #motivational #motivationalvideo #motivationalquotes #motivated #jimcarrey #fyp #viral daily..motiv8tion89·1-15If you’re in your 20s this is for you.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #rainnwilson #fyp #viral daily..motiv8tion659·1-8Let’s get this money 2025 is your year.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #rickross #fyp #viral daily..motiv8tion75·1-1Sometimes just being p
-
-
-...
-...
-...
-...
-
-
-08·2024-12-20Stop being so hard on yourself.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #theovon #postmalone #fyp #viral daily..motiv8tion542·2024-12-20Be the miracle. #motivation #motivational #motivationalvideo #motivationalquotes #motivated #morganfreeman #fyp #viral daily..motiv8tion114·2024-12-18Theo von believes in god.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #motivated #theovon #fyp #viral daily..motiv8tion395·2024-12-17Joker is that guy
-#motivation #motivational #motivationalvideo #motivationalquotes #motivated #jauqinphonenix #fyp #viral daily..motiv8tion33·2024-12-15Sometimes in life things get hard but you have to continue and grind!
-#motivation #motivational #motivationalvideo #motivationalquotes #motivated #ishowspeed #fyp #viral daily..motiv8tion54·2024-12-14Nobody thinks what its like to be the other guy.! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #joker #tylerthecreator #fyp #viral daily..motiv8tion41·2024-12-13You can fail at what you dont want!
-So you might as well take a chance on doing what you love! #motivation #motivational #motivationalvideo #motivationalquotes #motivated #jimcarrey #fyp #viral daily..motiv8tion126·2024-12-12God has a purpose for you Its up to you to go out and find it. #motivation #motivational #motivationalvideo #motivationalquotes #motivated #theovon #fyp #viral daily..motiv8tion67·2024-12-11More videos31 commentsLog in to comment
-[34mThe logs here have been shortened for readability. Try clicking 'View Inputs' or 'View Outputs' to see the complete inputs or outputs for this node.[0m
-
-...
-...
-...
-...
-
-
-rd #spaceforce #soldier #kagandunlap kagan_dunlap21.6K·2d ago DHS and the Pentagon will be establishing a Detention Center in Guantanamo Bay capable of housing 30,000 people Migrants. #fyp #fypシ #foryou #foryoupage #miltok #military #army #navy #airforce #marinecorps #usmarines #marine #coastguard #spaceforce #soldier #kagandunlap kagan_dunlap1953·2d ago The Laken Riley Act has been signed into law by President Trump. kagan_dunlap6224·2d ago An American Airlines Flight Crashed into a Blackhawk helicopter in Washington DC.kagan_dunlap68.4K·3d ago Is this what light stage capitalism looks like? #fyp #fypシ #foryou #foryoupage #miltok #military #army #navy #airforce #marinecorps #usmarines #marine #coastguard #spaceforce #soldier #kagandunlap kagan_dunlap6530·3d ago The Pigs of Ukraine. #fyp #fypシ #foryou #foryoupage #miltok #military #army #navy #airforce #marinecorps #usmarines #marine #coastguard #spaceforce #soldier #kagandunlap kagan_dunlap12.3K·3d ago China’s Robot Dog workforce. kagan_dunlap2873·3d ago Bro pulled that right out of his inventory. kagan_dunlap337.1K·3d ago Turns out, Representative Nancy Mace was the first female to graduate from the Citadel. #fyp #fypシ #foryou #foryoupage #miltok #military #army #navy #airforce #marinecorps #usmarines #marine #coastguard #spaceforce #soldier #kagandunlap kagan_dunlap8149·3d ago DOGE Claims that they are currently saving the Government $1 Billion dollars a day.kagan_dunlap3410·3d ago More videos1904 commentsLog in to comment
-[34mThe logs here have been shortened for readability. Try clicking 'View Inputs' or 'View Outputs' to see the complete inputs or outputs for this node.[0m
+March 27 on @Max @Jake Paul | max | TikTok Skip to content feedTikTokLog inTikTokSearchFor YouExploreFollowingUpload LIVEProfileMoreLog inCompanyProgramTerms & Policies© 2025 TikTok179.8K163210.3K35.3KloganpaulLogan Paul · 6d ago FollowThe moment you’ve waited a decade for…moreMarch 27 on @Max
+@Jake Paul
+M83 Solitude - Grace
     """
     params = {}
 
