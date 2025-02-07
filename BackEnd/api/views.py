@@ -1,4 +1,7 @@
+import re
+from django.http import JsonResponse
 from rest_framework.decorators import api_view, parser_classes
+from django.http import QueryDict
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, JSONParser
 from .serializers import UserProfileSerializer
@@ -7,6 +10,8 @@ import bcrypt
 import bcrypt
 import json
 from django.shortcuts import render
+from django.core.mail import send_mail
+from django.conf import settings
 
 def index_view(request):
     return render(request, "index.html")
@@ -49,20 +54,26 @@ def check_email(request):
 def upload_json_file(request):
     """API to handle JSON file upload and optionally associate it with a user's email."""
     # Get the user's email from the request (optional)
+    print("Entering API")
     user_email = request.data.get('email')
 
     uploaded_file = request.FILES.get('file', None)
     if not uploaded_file:
         return Response({"error": " file provided."}, status=400)
 
+    print("AIAIAIAIAAI")
+
     try:
         # Read and parse the uploaded JSON file
         file_data = uploaded_file.read().decode('utf-8')
         json_data = json.loads(file_data)
-
         # Extract "following" list from the JSON (if present)
         profile = json_data.get("Profile", {})
         following_list = profile.get("Following List", {}).get("Following", [])
+
+        if not following_list:
+            profile = json_data.get("Activity", {})
+            following_list = profile.get("Following List", [])
 
         if not following_list:
             return Response({"error": "No 'Following' found in the JSON file."}, status=400)
@@ -123,7 +134,22 @@ def create_user_profile(request):
             "json_file": json_file,
         }).execute()
 
-        return Response({"message": "User profile created successfully!"}, status=201)
+        # if response.data:  # If user was created successfully
+        #     # Send welcome email
+        #     try:
+        #         send_mail(
+        #             subject='Welcome to Social Media Manager!',
+        #             message=f'Hi {first_name},\n\nWelcome to Social Media Manager! Your account has been created successfully.',
+        #             from_email=settings.DEFAULT_FROM_EMAIL,
+        #             recipient_list=[email],
+        #             fail_silently=True,
+        #         )
+        #     except Exception as e:
+        #         print(f"Failed to send welcome email: {str(e)}")
+        #         # Continue even if email fails - don't block user registration
+            
+        #     return Response({"message": "User profile created successfully!"}, status=201)
+            
     except Exception as e:
         return Response({"error": f"Failed to create user profile: {str(e)}"}, status=500)
 
@@ -204,3 +230,160 @@ def creator_data(request):
         return Response({"message": "Social media data stored!"}, status=201)
     except Exception as e:
         return Response({"error": f"Failed to store social media data: {str(e)}"}, status=500)
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser])  # Enable file upload and parsing
+def personalized_Algorithm_Data(request):
+    """API to handle JSON file upload and access the liked/bookmarked videos to generate creator recomendation."""
+    # Get the user's email from the request (optional)
+    print("ENTERED")
+    uploaded_file = request.FILES.get('file', None)
+    if not uploaded_file:
+        return Response({"error": " file provided."}, status=400)
+
+    try:
+        # Read and parse the uploaded JSON file
+        file_data = uploaded_file.read().decode('utf-8')
+        json_data = json.loads(file_data)
+
+        # Extract "following" list from the JSON (if present)
+        profile = json_data.get("Activity", {})
+
+        if not profile:
+            return Response({
+            "message": "No profile data."
+        }, status=200)
+
+        likes = profile.get("Like List", []).get("ItemFavoriteList", [])
+        bookmarks = profile.get("Favorite Videos", []).get("FavoriteVideoList", [])
+
+        d = {"Likes": likes, "Bookmarks": bookmarks}
+
+        return Response({
+            "message": "Bookmarks/Likes extracted",
+            "dict": d
+        }, status=200)
+
+    except json.JSONDecodeError:
+        return Response({"error": "Invalid JSON file."}, status=400)
+    except Exception as e:
+        return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+    
+@api_view(['POST'])
+def personalized_creator_recommendation(request):
+    """
+    API to generate personalized creator recommendations based on liked and bookmarked videos.
+    """
+    likes, bookmarks = [], []
+
+    try:
+        # Extract the raw QueryDict from request.data
+        raw_data = request.data  # This is typically already a dict-like object in DRF
+        
+        # Convert QueryDict to a regular dictionary
+        if isinstance(raw_data, QueryDict):
+            data = dict(raw_data.lists())  # To preserve multiple values per key
+        else:
+            data = raw_data  # It's already a regular dictionary if not a QueryDict
+
+        # Now access the Likes and Bookmarks
+        likes = data.get("Likes", [])
+        bookmarks = data.get("Bookmarks", [])
+
+        if not likes and not bookmarks:
+            return Response({"error": "No data provided for Likes or Bookmarks."}, status=400)
+
+    except json.JSONDecodeError:
+        return Response({"error": "Invalid JSON payload."}, status=400)
+    except Exception as e:
+        return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+
+    def extract_uid(url):
+        match = re.search(r'/video/(\d+)', url)
+        return match.group(1) if match else None
+
+    print("EXTRACTED")
+
+    try:
+        # Create a dictionary to store scores for each creator
+        creator_scores = {}
+        print("BABABABAB")
+        def calculate_score(likes_count, comments_count, weight=1):
+            """
+            Calculate a score modifier based on likes and comments.
+            Apply a weight for likes/bookmarks.
+            """
+            scaling_factor = 1 + (likes_count / 1_000_000) + (comments_count / 100_000)
+            return weight / scaling_factor
+        
+        # Process liked videos
+        for video in likes:
+            video_url = video.get("link")
+            like_uid = extract_uid(video_url)
+            print("VIDEOURL", video_url)
+            if not video_url or not like_uid:
+                continue
+
+            # Query the database for this video's data
+            response = supabase.table("tiktok_video_data").select(
+                "creator_handle, likes_count, comments_count"
+            ).like("tiktok_url", f"%{like_uid}%").execute()
+
+            if response.data:
+                print("RESPONSE", response.data)
+                for record in response.data:
+                    creator_handle = record["creator_handle"]
+                    likes_count = record["likes_count"]
+                    comments_count = record["comments_count"]
+
+                    # Calculate score
+                    score = calculate_score(likes_count, comments_count, weight=1)
+                    if creator_handle in creator_scores:
+                        creator_scores[creator_handle] += score
+                    else:
+                        creator_scores[creator_handle] = score
+
+        # Process bookmarked videos
+        for video in bookmarks:
+            video_url = video.get("Link")
+            bookmark_uid = extract_uid(video_url)
+            print("BOOKMARK", bookmark_uid)
+            if not video_url or not bookmark_uid:
+                continue
+
+            # Query the database for this video's data
+            response = supabase.table("tiktok_video_data").select(
+                "creator_handle, likes_count, comments_count"
+            ).like("tiktok_url", f"%{bookmark_uid}%").execute()
+
+            if response.data:
+                for record in response.data:
+                    creator_handle = record["creator_handle"]
+                    likes_count = record["likes_count"]
+                    comments_count = record["comments_count"]
+
+                    # Calculate score (bookmarks have higher weight)
+                    score = calculate_score(likes_count, comments_count, weight=1.35)
+                    if creator_handle in creator_scores:
+                        creator_scores[creator_handle] += score
+                    else:
+                        creator_scores[creator_handle] = score
+
+        # Sort creators by score
+        ranked_creators = sorted(
+            [
+                {"creator_handle": handle, "score": score}
+                for handle, score in creator_scores.items()
+            ],
+            key=lambda x: x["score"],
+            reverse=True,
+        )
+
+        return Response({
+            "message": "Creator recommendations generated.",
+            "ranked_creators": ranked_creators
+        }, status=200)
+
+    except Exception as e:
+        return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+
