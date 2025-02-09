@@ -449,90 +449,101 @@ const App = ({/*route,*/ navigation }) => {
     const formData = new FormData();
 
     try {
-        if (file) {
-
-            if (Platform.OS === 'web') {
-                formData.append('file', file);
-            } else {
-                formData.append('file', {
-                    uri: file.uri,
-                    name: file.name,
-                    type: file.type,
-                });
-            }
-
-            console.log("FORM DATA", formData);
-            console.log("EMAIL", email);
-
-            // Make sure email is properly encoded in the URL
-            const encodedEmail = encodeURIComponent(email);
-            
-            // Only proceed with upload if we have an email
-            if (!email) {
-                Alert.alert('Error', 'No email provided. Please log in first.');
-                return;
-            }
-
-            response = await api.post(`/api/upload-json/${encodedEmail}/`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                }
-            });
-
-            if (response?.status === 200) {
-                Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
-            } else {
-                console.error('Error response:', response?.data);
-                Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
-                return;
-            }
-            
-          if (isLoggedIn && encodedEmail) {
-            let file_type = undefined;
-            if (file.type === 'application/json') {
-              file_type = 'json';
-            }
-            else {
-              file_type = 'png';
-            }
-            try {
-              // Call the backend to generate pre-signed URLs
-              response = await fetch(`/aws/generate_presigned_url/${encodedEmail}/${file_type}/`, {
-                  method: 'POST',
-              });
-      
-              if (!response.ok) {
-                  throw new Error('Failed to generate presigned URLs');
-              }
-      
-              const data = await response.json();
-      
-              // Upload file to both user-specific and general folders
-              await fetch(data.user_presigned_url, {
-                  method: 'PUT',
-                  headers: {
-                      'Content-Type': file.type, // Ensure correct MIME type
-                  },
-                  body: file
-              });
-      
-              await fetch(data.general_presigned_url, {
-                  method: 'PUT',
-                  headers: {
-                      'Content-Type': file.type, // Ensure correct MIME type
-                  },
-                  body: file
-              });
-      
-          } catch (error) {
-              console.error('Error uploading file:', error);
-          }
-        }
-
-        } else {
+        if (!file) {
             Alert.alert('Error', 'No file was selected.');
             return;
         }
+
+        if (Platform.OS === 'web') {
+            formData.append('file', file);
+        } else {
+            formData.append('file', {
+                uri: file.uri,
+                name: file.name,
+                type: file.type,
+            });
+        }
+
+        // Make sure email is properly encoded in the URL
+        const encodedEmail = encodeURIComponent(email);
+        
+        // Only proceed with upload if we have an email
+        if (!email) {
+            Alert.alert('Error', 'No email provided. Please log in first.');
+            return;
+        }
+
+        // First, process the JSON file
+        response = await api.post(`/api/upload-json/${encodedEmail}/`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+
+        if (response?.status === 200) {
+            Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
+        } else {
+            console.error('Error response:', response?.data);
+            Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
+            return;
+        }
+            
+        // If user is logged in, proceed with S3 upload
+        if (isLoggedIn && encodedEmail) {
+            const file_type = file.type === 'application/json' ? 'json' : 'png';
+            
+            console.log("FILE TYPE", file_type)
+            try {
+                // Call the backend to generate pre-signed URLs
+                const s3Response = await api.post(`/aws/generate_presigned_url/${encodedEmail}/${file_type}/`);
+                
+                if (!s3Response.data) {
+                    throw new Error('Failed to generate presigned URLs');
+                }
+
+                const { user_presigned_url, general_presigned_url } = s3Response.data;
+
+                // Upload file to user-specific folder
+                const userUploadResponse = await fetch(user_presigned_url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': file.type,
+                    },
+                    body: file
+                });
+
+                if (!userUploadResponse.ok) {
+                    throw new Error('Failed to upload to user folder');
+                }
+
+                // Upload file to general folder
+                const generalUploadResponse = await fetch(general_presigned_url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': file.type,
+                    },
+                    body: file
+                });
+
+                if (!generalUploadResponse.ok) {
+                    throw new Error('Failed to upload to general folder');
+                }
+
+                Alert.alert('Success', 'File uploaded successfully to S3 and processed!');
+            } catch (s3Error) {
+                console.error('S3 upload error:', s3Error);
+                Alert.alert(
+                    'Warning',
+                    'File was processed but failed to upload to S3. Please try uploading again.'
+                );
+                return;
+            }
+        } else {
+            console.error('Error response:', response?.data);
+            Alert.alert('Error', response?.data?.error || 'An error occurred while processing the file.');
+            return;
+        }
+
     } catch (error) {
         console.error('File upload error:', error.message);
         if (error.response) {
