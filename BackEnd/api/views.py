@@ -55,7 +55,7 @@ def check_email(request):
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser])  # Enable file upload and parsing
-def upload_json_file(request, email):
+def upload_json_file(request, email=None):  # Make email parameter optional
     """
         API to handle JSON file upload.
         If the user is logged in, the JSON file is associated with the user's email in the database.

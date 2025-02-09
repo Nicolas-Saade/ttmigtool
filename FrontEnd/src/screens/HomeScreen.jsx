@@ -464,17 +464,12 @@ const App = ({/*route,*/ navigation }) => {
             });
         }
 
-        // Make sure email is properly encoded in the URL
-        const encodedEmail = encodeURIComponent(email);
+        // Make sure email is properly encoded in the URL if it exists
+        const encodedEmail = email ? encodeURIComponent(email) : null;
         
-        // Only proceed with upload if we have an email
-        if (!email) {
-            Alert.alert('Error', 'No email provided. Please log in first.');
-            return;
-        }
-
-        // First, process the JSON file
-        response = await api.post(`/api/upload-json/${encodedEmail}/`, formData, {
+        // Process the JSON file - use different endpoints based on login status
+        const uploadUrl = encodedEmail ? `/api/upload-json/${encodedEmail}/` : '/api/upload-json/';
+        response = await api.post(uploadUrl, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             }
@@ -488,7 +483,7 @@ const App = ({/*route,*/ navigation }) => {
             return;
         }
             
-        // If user is logged in, proceed with S3 upload
+        // Only proceed with S3 upload if user is logged in
         if (isLoggedIn && encodedEmail) {
             const file_type = file.type === 'application/json' ? 'json' : 'png';
             
@@ -538,12 +533,7 @@ const App = ({/*route,*/ navigation }) => {
                 );
                 return;
             }
-        } else {
-            console.error('Error response:', response?.data);
-            Alert.alert('Error', response?.data?.error || 'An error occurred while processing the file.');
-            return;
         }
-
     } catch (error) {
         console.error('File upload error:', error.message);
         if (error.response) {
