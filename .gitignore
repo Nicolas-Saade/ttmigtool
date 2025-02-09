@@ -1,4 +1,36 @@
 /FrontEnd/node_modules/
+
+/venv/
+/myenv/
+node_modules/
+FrontEnd/dist/
+
+# Python/BackEnd Files
+*.pyc
+*/__pycache__/
+BackEnd/db.sqlite3
+BackEnd/BackEnd/db.sqlite3
+*/staticfiles/
+*/static/
+/BackEnd/config
+/BackEnd/.DS_Store
+.DS_Store
+
+# FrontEnd Files
+*.log
+*.log.*
+*/node_modules/
+node_modules
+FrontEnd/node_modules/
+FrontEnd/dist
+FrontEnd/venv/
+FrontEnd/android/.gradle/8.10.2/fileHashes/fileHashes.lock
+
+# All Env Files
+*.env
+venv/
+AWSCLIV2.pkg 
+# what is this on top?
 .DS_Store
 /BackEnd/.DS_Store
 *.pyc
@@ -16,3 +48,5 @@ node_modules/
 BackEnd/BackEnd/db.sqlite3
 FrontEnd/dist/
 BackEnd/Database/null_account_fixing.py
+
+AWSCLIV2.pkg

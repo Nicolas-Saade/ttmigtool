@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import {
   View,
@@ -9,14 +9,23 @@ import {
   Animated,
   Linking,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native';
 import { Modal, TextInput } from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import ProfileBox from '../components/ProfileBox';
+import CustomProfileBox from '../components/UserProfileBox';
 import { api } from '../utils';
 import { useDropzone } from 'react-dropzone';
-import { createRoot } from 'react-dom/client'
+import { createRoot } from 'react-dom/client';
+import SearchBar from '../components/SearchBar';
+import AlertModal from '../components/NotLoggedInAdding';
+import FilterModal from '../components/FilterModal';
+import { colors, typography, borderRadius, shadows } from '../theme';
+import LoginModal from '../components/LogInModal';
+import RegisterModal from '../components/RegisterModal';
+import { handleFileSelect } from '../components/FileSelector';
 
 const screenWidth = Dimensions.get('window').width;
 const boxWidth = 150; // Set your desired profile box width
@@ -25,14 +34,25 @@ const columns = Math.floor(screenWidth / (boxWidth + margin * 2));
 const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
 const App = ({/*route,*/ navigation }) => {
+  const [allProfiles, setAllProfiles] = useState([]); // Keep the original list
+  const [filterProfiles, setFilterProfiles] = useState([]); // Keep the list of mapped urls and their users
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountName, setAccountName] = useState('Guest');
+  const [accountName, setAccountName] = useState('');
   const [profiles, setProfiles] = useState([]);
   const [navbarHeight, setNavbarHeight] = useState(0);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSavePopup, setShowSavePopup] = useState(false);
+  const [isNotificationVisible, setIsNotificationVisible] = useState(false);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [algoResults, setAlgoResults] = useState({}); // Store algorithm ranking dict
+  const [sortOn, setSortOn] = useState(false); // State for sorting profiles
 
   // State for Creator Form
   const [creatorModal, setCreatorModal] = useState(false);
@@ -46,7 +66,7 @@ const App = ({/*route,*/ navigation }) => {
   const [token, setToken] = useState(''); // State for the random token in Creator Form
 
 
-  const [showRegisterModal, setShowRegisterModal] = useState(false); // State for registration modal
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   // const [loading, setLoading] = useState(true);
 
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -55,24 +75,132 @@ const App = ({/*route,*/ navigation }) => {
 
   const scrollAnim = new Animated.Value(0); // Tracks scroll (Y-axis) position
   const offsetAnim = new Animated.Value(0); // TODO Use later for snapping footer back in place
+  const popupOpacity = useRef(new Animated.Value(0)).current;
 
-  const clampedScroll = Animated.diffClamp( // Value used for footer translation and opacity interpolation
+  const clampedScroll = Animated.diffClamp(
     Animated.add(scrollAnim, offsetAnim),
     0,
     navbarHeight
   );
 
   const footerTranslate = clampedScroll.interpolate({
-    inputRange: [0, navbarHeight], // UpperBounded by diffClamp
-    outputRange: [0, -navbarHeight], // Move footer up by its height (hide it)
-    extrapolate: 'clamp', // Disables extrapolation (limits the interpolation output)
+    inputRange: [0, navbarHeight],
+    outputRange: [0, isNotificationVisible ? -navbarHeight : 0], // Adjust based on notification visibility
+    extrapolate: 'clamp',
   });
 
   const footerOpacity = clampedScroll.interpolate({
     inputRange: [0, navbarHeight],
-    outputRange: [1, 0], // 1:Opaque-2:Transparent
+    outputRange: [1, 0],
     extrapolate: 'clamp',
   });
+
+  const [contentHeight, setContentHeight] = useState(0);
+
+  // Add this new state near your other states
+  const [showSortAlert, setShowSortAlert] = useState(false);
+
+  useEffect(() => {
+    const rows = Math.ceil(profiles.length / columns);
+    const boxHeight = 160; // Height of each profile box
+    const verticalMargin = 15; // Margin between boxes
+    const minHeight = rows * (boxHeight + verticalMargin) + 100; // Added padding for header
+    setContentHeight(minHeight);
+  }, [profiles.length]);
+
+  const handleFilter = () => {
+    setIsFilterModalVisible(true);
+  };
+
+  const handleSortProfiles = () => {
+    // // Check if algoResults is populated
+    // if (sortOn) {
+    //   setSortOn(false);
+    //   setProfiles([...allProfiles]);}
+    // else {
+    //   setSortOn(true);
+    // }
+
+    // if (Object.keys(algoResults).length === 0) {
+    //   Alert.alert('Notice', 'No algorithm results to sort by.');
+    //   return;
+    // }
+
+    // // Sort profiles by their algo score
+    // const sortedProfiles = [...profiles].sort((a, b) => {
+    //   const scoreA = algoResults[a.UserName] || 0;
+    //   const scoreB = algoResults[b.UserName] || 0;
+    //   return scoreB - scoreA; // Descending order
+    // });
+
+    // console.log("Sorted Profiles:", sortedProfiles);
+    // setProfiles(sortedProfiles);
+
+    // HyperParameter Tuning on Sorting Algorithm still needs to be done
+
+    setShowSortAlert(true);
+    // Hide the alert after 3 seconds
+    setTimeout(() => {
+      setShowSortAlert(false);
+    }, 3000);
+  };
+  
+  const handleSelectPlatform = (selectedPlatforms) => {
+    if (selectedPlatforms.length === 0) {
+      // If no platforms are selected, reset to all profiles
+      setProfiles([...allProfiles]);
+      return;
+    }
+  
+    // Filter profiles based on the selected platforms
+    const filteredProfiles = allProfiles.filter((profile) =>
+      selectedPlatforms.every((platform) => {
+        let normalizedPlatform = platform.toLowerCase();
+
+        if (normalizedPlatform === 'x') {
+          normalizedPlatform = 'twitter';
+        }
+
+        return (
+          profile[`${normalizedPlatform}_url`] &&
+          profile[`${normalizedPlatform}_url`].trim() !== '' &&
+          profile[`${normalizedPlatform}_url`].trim() !== undefined
+        );
+      })
+    );
+  
+    setProfiles(filteredProfiles);
+  };
+
+  const handleShowPopup = () => {
+    setShowSavePopup(true);
+    setIsNotificationVisible(true); 
+
+    // Show popup (set opacity to 1)
+    popupOpacity.setValue(1);
+
+    // Automatically hide the popup after 5 seconds
+    setTimeout(() => {
+      popupOpacity.setValue(0);
+      setShowSavePopup(false);
+    }, 12000);
+    };
+
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    if (query.trim() === '') {
+      // If the search query is empty, reset to all profiles
+      setProfiles([...allProfiles]);
+    } else {
+      // Filter profiles based on the search query
+      const filteredProfiles = allProfiles.filter((profile) =>
+      profile.UserName.toLowerCase().includes(query.toLowerCase())
+    );
+      setProfiles(filteredProfiles);
+    }
+
+  };
 
   // PlaceHolder for login
   // const handleLogin = () => {
@@ -94,7 +222,7 @@ const App = ({/*route,*/ navigation }) => {
 
     try {
         // Send API request to check if email exists in the database
-        const response = await api.post('/api/check-email/', { email: emailInput, password: passwordInput, password: passwordInput });
+        const response = await api.post('/api/check-email/', { email: emailInput, password: passwordInput });
 
         if (response.status === 200) {
             const user = response.data;
@@ -135,11 +263,9 @@ const App = ({/*route,*/ navigation }) => {
       const followingList = profile["Following List"]?.Following || [];
 
       if (followingList.length === 0) {
-        //Alert.alert('Notice', 'No "following" data found in your JSON file.');
+        Alert.alert('Notice', 'No "following" data found in your JSON file.');
         return;
       }
-
-        // console.log('Following List:', followingList);
 
       const prof = followingList.map(profile => {
         if (profile.UserName) {
@@ -155,23 +281,40 @@ const App = ({/*route,*/ navigation }) => {
         return;
       }
 
-      console.log('Usernames to map:', prof);
-
-      // Fetch mapped profiles
-      const mappedProfilesResponse = await api.post(
-        '/api/profile-mapping/',
-        { prof },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      // Process profiles in chunks of 30
+      const processProfileChunk = async (chunk) => {
+        try {
+          const response = await api.post(
+            '/api/profile-mapping/',
+            { prof: chunk },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          return response.data?.profiles || [];
+        } catch (error) {
+          console.error('Chunk processing error:', error);
+          return [];
         }
-      );
+      };
 
-        const mappedProfiles = mappedProfilesResponse.data?.profiles || [];
-        // console.log('Mapped Profiles:', mappedProfiles);
+      // Split array into chunks of 30
+      const chunks = [];
+      for (let i = 0; i < prof.length; i += 30) {
+        chunks.push(prof.slice(i, i + 30));
+      }
 
-      setProfiles([...mappedProfiles]);
+      // Process all chunks and combine results
+      const allMappedProfiles = [];
+      for (const chunk of chunks) {
+        const chunkProfiles = await processProfileChunk(chunk);
+        allMappedProfiles.push(...chunkProfiles);
+      }
+
+      setProfiles([...allMappedProfiles]);
+      setAllProfiles([...allMappedProfiles]);
 
       Alert.alert('Success', 'Profiles successfully mapped from your data!');
     } catch (error) {
@@ -184,101 +327,70 @@ const App = ({/*route,*/ navigation }) => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     //setAccountName('Nicolas Saade');
-    setAccountName('Guest');
+    setAccountName('');
   };
 
-  const handleFileSelect = async () => {
-    if (Platform.OS === 'web') {
-      return new Promise((resolve, reject) => {
-        const container = document.createElement('div');
-        document.body.appendChild(container);
-        const root = createRoot(container);
-        const handleClose = () => {
-            root.unmount(); // unmount the React tree
-            container.remove(); // Remove container from the DOM
-        };
-        const DropzoneComponent = () => {
-            const onDrop = (acceptedFiles) => {
-                if (acceptedFiles.length > 0) {
-                    resolve(acceptedFiles[0]); // Resolve with the selected file
-                    handleClose(); // Cleanup the modal
-                } else {
-                    reject(new Error('No file selected'));
-                    handleClose();
-                }
-            };
-            const { getRootProps, getInputProps, isDragActive } = useDropzone({
-                onDrop,
-                accept: '.json', // Accept only JSON files
-                maxFiles: 1, // Single file
-            });
-            return (
-                <div
-                    {...getRootProps()}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        zIndex: 1000,
-                    }}
-                >
-                    <div
-                        style={{
-                            backgroundColor: '#fff',
-                            padding: '20px',
-                            borderRadius: '8px',
-                            textAlign: 'center',
-                        }}
-                    >
-                        <input {...getInputProps()} />
-                        {isDragActive ? (
-                            <p>Drop the file here...</p>
-                        ) : (
-                            <p>Drag & drop a JSON file here, or click to select one</p>
-                        )}
-                        <button
-                            onClick={handleClose}
-                            style={{
-                                marginTop: '10px',
-                                padding: '10px 20px',
-                                backgroundColor: '#f44336',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-        root.render(<DropzoneComponent />);
-    });
-    } else {
-      // Native-specific file picker using react-native-document-picker
-      const DocumentPicker = await import('react-native-document-picker'); // Dynamically import
-      try {
-        const results = await DocumentPicker.pick({
-          type: [DocumentPicker.types.allFiles], // Adjust file type validation if needed
-        });
-        return results[0]; // Return the first selected file
-      } catch (err) {
-        if (DocumentPicker.isCancel(err)) {
-          // User canceled the picker --> no action needed
+  const handlePPupload = async () => {
+    const file = await handleFileSelect();
+    let response = null;
+
+    try {
+        if (file) {
+            let file_type = undefined;
+            if (file.type === 'application/json') {
+              file_type = 'json';
+            }
+            else {
+              file_type = 'png';
+            }
+            try {
+              // Call the backend to generate pre-signed URLs
+              response = await fetch(`/aws/generate_presigned_url/${email}/${file_type}/`, {
+                  method: 'POST',
+              });
+      
+              if (!response.ok) {
+                  throw new Error('Failed to generate presigned URLs');
+              }
+      
+              const data = await response.json();
+      
+              // Upload file to both user-specific and general folders
+              await fetch(data.user_presigned_url, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': file.type, // Ensure correct MIME type
+                  },
+                  body: file
+              });
+      
+              await fetch(data.general_presigned_url, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': file.type, // Ensure correct MIME type
+                  },
+                  body: file
+              });
+
+              setProfileImagePreview(data.user_presigned_url);
+          } catch (error) {
+              console.error('Error uploading file:', error);
+          }
         } else {
-          Alert.alert('Something went wrong with file picking', err.message);
+            Alert.alert('Error', 'No file was selected.');
+            return;
         }
-      }
+    } catch (error) {
+        console.error('File upload error:', error.message);
+        if (error.response) {
+            Alert.alert('Error', error.response?.data?.error || 'An unexpected error occurred.');
+        } else {
+            Alert.alert('Error', 'An unexpected error occurred.');
+        }
+        return;
     }
-  };
+
+  }
 
   //hanlde account registration
   const handleRegister = async (firstName, lastName, email, password, file) => {
@@ -311,6 +423,10 @@ const App = ({/*route,*/ navigation }) => {
         setPassword('');
         setAccountName(firstName + ' ' + lastName); // Optionally set the user's name
         setEmail(email);
+        // Check for JSON file and process it
+        if (response.data.json_file && Object.keys(response.data.json_file).length > 0) {
+          processFollowingFromJson(response.data.json_file);
+        }
       } else {
         Alert.alert('Error', 'Unexpected response from the server.');
       }
@@ -330,16 +446,11 @@ const App = ({/*route,*/ navigation }) => {
   const handleFileDrop = async () => {
     const file = await handleFileSelect();
     let response = null;
+    const formData = new FormData();
 
     try {
         if (file) {
-            console.log('File successfully dropped and parsed:', {
-                name: file.name,
-                type: file.type,
-                size: file.size,
-            });
 
-            const formData = new FormData();
             if (Platform.OS === 'web') {
                 formData.append('file', file);
             } else {
@@ -350,15 +461,22 @@ const App = ({/*route,*/ navigation }) => {
                 });
             }
 
-            // Include user email if logged in
-            if (email) {
-                formData.append('email', email);
+            console.log("FORM DATA", formData);
+            console.log("EMAIL", email);
+
+            // Make sure email is properly encoded in the URL
+            const encodedEmail = encodeURIComponent(email);
+            
+            // Only proceed with upload if we have an email
+            if (!email) {
+                Alert.alert('Error', 'No email provided. Please log in first.');
+                return;
             }
 
-            response = await api.post('/api/upload-json/', formData, {
+            response = await api.post(`/api/upload-json/${encodedEmail}/`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                },
+                }
             });
 
             if (response?.status === 200) {
@@ -368,6 +486,49 @@ const App = ({/*route,*/ navigation }) => {
                 Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
                 return;
             }
+            
+          if (isLoggedIn && encodedEmail) {
+            let file_type = undefined;
+            if (file.type === 'application/json') {
+              file_type = 'json';
+            }
+            else {
+              file_type = 'png';
+            }
+            try {
+              // Call the backend to generate pre-signed URLs
+              response = await fetch(`/aws/generate_presigned_url/${encodedEmail}/${file_type}/`, {
+                  method: 'POST',
+              });
+      
+              if (!response.ok) {
+                  throw new Error('Failed to generate presigned URLs');
+              }
+      
+              const data = await response.json();
+      
+              // Upload file to both user-specific and general folders
+              await fetch(data.user_presigned_url, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': file.type, // Ensure correct MIME type
+                  },
+                  body: file
+              });
+      
+              await fetch(data.general_presigned_url, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': file.type, // Ensure correct MIME type
+                  },
+                  body: file
+              });
+      
+          } catch (error) {
+              console.error('Error uploading file:', error);
+          }
+        }
+
         } else {
             Alert.alert('Error', 'No file was selected.');
             return;
@@ -384,8 +545,21 @@ const App = ({/*route,*/ navigation }) => {
 
     // Process following data after a successful file upload
     try {
-        const { following } = response?.data || {};
-        console.log('Following data:', following);
+        let { following } = response?.data || {};
+
+        if (following && !Array.isArray(following)) {
+          try {
+            following = following["Following"];
+            if (following["Following"].size > 0) {
+              following = following["Following"];
+            } else {
+              throw new Error('No "Following" property found in the object.');
+            }
+          } catch (error) {
+            console.error("Error:", error.message);
+            Alert.alert('Error', 'No "following" data found in the uploaded JSON file.');
+          }
+        }
 
         if (following && Array.isArray(following)) {
             const prof = following
@@ -419,6 +593,7 @@ const App = ({/*route,*/ navigation }) => {
                         },
                     }
                 );
+                console.log("Mapped Profiles Response", mappedProfilesResponse);
                 mappedProfiles.push(...mappedProfilesResponse.data?.profiles || []);
 
               } catch (error) {
@@ -427,9 +602,13 @@ const App = ({/*route,*/ navigation }) => {
               }
             }
 
-            console.log('Mapped Profiles:', mappedProfiles);
-
             setProfiles([...mappedProfiles]);
+            setAllProfiles([...mappedProfiles]);
+            
+            if (!isLoggedIn) {
+              setShowSavePopup(true);
+              handleShowPopup();
+            }
 
             Alert.alert('Success', 'Profiles successfully mapped!');
         } else {
@@ -443,9 +622,90 @@ const App = ({/*route,*/ navigation }) => {
             Alert.alert('Error', 'Failed to process profiles.');
         }
     }
+
+    response = await api.post('/api/personalized-algorithm-data/', formData, {
+      headers: {
+          'Content-Type': 'multipart/form-data',
+      },
+  });
+
+  let liked_vids = [];
+  let bookmarked_vids = [];
+
+  if (response?.status === 200) {
+      Alert.alert('Success', response.data?.message || `File "${file.name}" uploaded successfully!`);
+
+      liked_vids = response.data.dict.Likes;
+      bookmarked_vids = response.data.dict.Bookmarks;
+  }
+  else {
+    Alert.alert('Error', response?.data?.error || 'An error occurred while uploading the file.');
+  }
+
+  const batchSize = 30;
+  const batches = [];
+  let results = {};
+
+  // Split likes and bookmarks into batches of 100
+  for (let i = 0; i < liked_vids.length; i += batchSize) {
+    batches.push({ Likes: liked_vids.slice(i, i + batchSize), Bookmarks: [] });
+  }
+  for (let i = 0; i < bookmarked_vids.length; i += batchSize) {
+    batches.push({ Likes: [], Bookmarks: bookmarked_vids.slice(i, i + batchSize) });
+  }
+
+  let updatedResults = {};
+
+  for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+
+      try {
+        const response = await api.post('/api/personalized-creator-recommendation/', JSON.stringify(batch), {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log(`Batch ${i + 1} result:`, response);
+
+        let scores = response.data.ranked_creators;
+
+        console.log("SCORES", scores);
+
+        let key = undefined
+        let value = undefined
+
+        for (const creator of Object.values(scores)) {
+          key = creator.creator_handle
+          if (key === undefined) {
+            continue;
+          }
+          key = key.replace('@', '');
+          value = creator.score;
+          
+          if (!results[key]) {
+            results[key] = 0; // Start with 0 if the key isn't present
+          }
+          results[key] += value;
+        }
+
+        console.log('Ranked Creators:', results);
+        updatedResults = { ...algoResults };
+        for (const [key, value] of Object.entries(results)) {
+          if (updatedResults[key]) {
+            updatedResults[key] += value; // Add to existing value
+          } else {
+            updatedResults[key] = value; // Initialize new key
+          }
+        }
+
+      } catch (error) {
+        console.error(`Error sending batch ${i + 1}:`, error);
+      }
+  }
+  setAlgoResults(updatedResults);
+
 };
-
-
 
   const handleBulkFollow = (platform) => {
     Alert.alert('Bulk Follow', `Following all users on ${platform}!`);
@@ -517,19 +777,48 @@ const App = ({/*route,*/ navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
-          <BulkFollowDropdown onSelectPlatform={handleBulkFollow} />
+
+          <SearchBar
+            onSearch={handleSearch}
+            placeholder="Search..."
+          />
+
+          {allProfiles.length !== 0 && (
+              <TouchableOpacity
+                onPress={handleFilter}
+                style={styles.filterButton}
+              >
+                <Text style={styles.filterButtonText}>Filter</Text>
+              </TouchableOpacity>
+            )}
+
+          <TouchableOpacity
+            onPress={handleFileDrop}
+            style={allProfiles === null ? styles.changeFileButtonSmall : styles.changeFileButton}>
+            <Text style={allProfiles.length !== 0 ? styles.changeFileTextSmall : styles.changeFileText}>
+              {allProfiles.length !== 0 ? 'Change File' : 'Add TikTok File'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* <BulkFollowDropdown onSelectPlatform={handleBulkFollow} /> */}
         </View>
 
         {/* Dynamic Profile Boxes */}
         <Animated.ScrollView
-          style={styles.profilesContainer}
-          onScroll={Animated.event( // Event listener for scroll
-            [{ nativeEvent: { contentOffset: { y: scrollAnim } } }], // bounds the scrollAnim value to the Y-axis scroll position
-            { useNativeDriver: true, }
+          style={[
+            styles.profilesContainer,
+            { minHeight: contentHeight }
+          ]}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollAnim } } }],
+            { useNativeDriver: true }
           )}
           scrollEventThrottle={16}
         >
-          <View style={styles.gridContainer}>
+          <View style={[
+            styles.gridContainer,
+            { minHeight: contentHeight }
+          ]}>
             {profiles.map((profile, index) => (
               <View key={index} style={styles.profileWrapper}>
                 <ProfileBox
@@ -542,6 +831,26 @@ const App = ({/*route,*/ navigation }) => {
                 />
               </View>
             ))}
+
+            {/* Add the custom box at the end */}
+            <View style={styles.profileWrapper}>
+              <TouchableOpacity
+                style={styles.customBox}
+                onPress={() => {
+                  if (isLoggedIn) {
+                    setCreatorModal(true); // Open the Creator Modal if logged in
+                  } else {
+                    setShowAlertModal(true); // Show custom alert modal
+                  }
+                }}
+              >
+                <View style={styles.profileWrapper}>
+                  <CustomProfileBox
+                    name={(accountName.trim()) ? `${accountName}` : 'Your Account'}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
         </Animated.ScrollView>
       </View>
@@ -561,144 +870,71 @@ const App = ({/*route,*/ navigation }) => {
         }}
       >
         <View style={styles.footerLeft}>
+          <TouchableOpacity style={styles.sortButton} onPress={handleSortProfiles}>
+            <Text style={styles.sortButtonText}>Sort</Text>
+          </TouchableOpacity>
+          
           {isLoggedIn ? (
-            <TouchableOpacity onPress={handleLogout}>
+            <TouchableOpacity onPress={handleLogout} style={styles.authButton}>
               <Text style={styles.footerText}>Sign Out</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={handleLogin}>
-              <Text style={styles.footerText}>Login</Text>
+            <TouchableOpacity onPress={handleLogin} style={styles.authButton}>
+              <Text style={styles.footerText}>SignUp/Login</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <TouchableOpacity
-          style={styles.footerCenter}
-          onPress={() => setCreatorModal(true)}>
+        <TouchableOpacity style={styles.footerCenter}>
           <Text style={styles.footerText}>{accountName}</Text>
         </TouchableOpacity>
+          
+        <AlertModal
+          visible={showAlertModal}
+          title="Login Required"
+          message="Please log in to add your accout's credentials."
+          onClose={() => setShowAlertModal(false)} // Close modal on button press
+        />
 
         <View style={styles.footerRight}>
-          <TouchableOpacity onPress={handleFileDrop}>
-            <Text style={styles.footerText}>Attach/Drop Files</Text>
-          </TouchableOpacity>
         </View>
       </Animated.View>
 
-      <Modal
+      <LoginModal
         visible={showLoginModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowLoginModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Login</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail} // Update state
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword} // Update state
-              secureTextEntry
-            />
-
-            {/* Buttons Row */}
-            <View style={styles.buttonsRow}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowLoginModal(false)}
-              >
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.loginButton}
-                onPress={handleCheckEmail} // Call handleCheckEmail instead of handleLogin
-              >
-                <Text style={styles.loginButtonText}>Login</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Sign Up Button */}
-            <TouchableOpacity
-              style={styles.signUpButton}
-              onPress={() => {
-                setShowLoginModal(false); // Close login modal
-                setShowRegisterModal(true); // Open register modal
-              }}
-            >
-              <Text style={styles.signUpButtonText}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={(userData) => {
+          setIsLoggedIn(true);
+          setEmail(userData.email);
+          setAccountName(`${userData.first_name} ${userData.last_name}`);
+          if (userData.json_file && Object.keys(userData.json_file).length > 0) {
+            processFollowingFromJson(userData.json_file);
+          }
+        }}
+        onRegisterClick={() => {
+          setShowLoginModal(false);
+          setShowRegisterModal(true);
+        }}
+      />
 
       {/* Registration Modal */}
-      <Modal
+      <RegisterModal
         visible={showRegisterModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowRegisterModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Register</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              value={firstName}
-              onChangeText={setFirstName} // Update state
-              autoCapitalize="words"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              value={lastName}
-              onChangeText={setLastName} // Update state
-              autoCapitalize="words"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email Address"
-              value={email}
-              onChangeText={setEmail} // Update state
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword} // Update state
-              secureTextEntry
-            />
-
-            {/* Buttons Row */}
-            <View style={styles.buttonsRow}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowRegisterModal(false)}
-              >
-                <Text style={styles.closeButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.registerButton}
-                onPress={() => handleRegister(firstName, lastName, email, password)}
-              >
-                <Text style={styles.registerButtonText}>Register</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
+        onClose={() => setShowRegisterModal(false)}
+        onRegisterSuccess={(userData) => {
+          setIsLoggedIn(true);
+          setAccountName(`${userData.first_name} ${userData.last_name}`);
+          // Clear form data
+          setFirstName('');
+          setLastName('');
+          setEmail('');
+          setPassword('');
+          // Check for JSON file and process it
+          if (userData.json_file && Object.keys(userData.json_file).length > 0) {
+            processFollowingFromJson(userData.json_file);
+          }
+        }}
+      />
 
       {/* Creator Modal */}
       <Modal
@@ -718,12 +954,17 @@ const App = ({/*route,*/ navigation }) => {
                 https://www.tiktok.com/@example
               </Text>
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Profile Picture URL"
-              value={creatorForm.profilePicture}
-              onChangeText={(text) => setCreatorForm((prev) => ({ ...prev, profilePicture: text }))}
-            />
+            {/* Profile Picture Picker */}
+            <TouchableOpacity onPress={ handlePPupload } style={styles.uploadButton}>
+              <Text style={styles.uploadButtonText}>
+                {profileImagePreview ? 'Change Profile Picture' : 'Upload Profile Picture'}
+              </Text>
+            </TouchableOpacity>
+
+            {profileImagePreview && (
+              <Image source={{ uri: profileImagePreview }} style={styles.profileImagePreview} />
+            )}
+
             <TextInput
               style={styles.input}
               placeholder="TikTok Username"
@@ -769,6 +1010,26 @@ const App = ({/*route,*/ navigation }) => {
         </View>
       </Modal>
 
+      <FilterModal
+        visible={isFilterModalVisible}
+        onClose={() => setIsFilterModalVisible(false)}
+        onSelectPlatform={handleSelectPlatform} // Pass handleSelectPlatform to the modal
+      />
+
+      {showSortAlert && (
+        <View style={styles.sortAlertOverlay}>
+          <View style={styles.sortAlertContent}>
+            <Text style={styles.sortAlertTitle}>Coming Soon! 🚀</Text>
+            <Text style={styles.sortAlertText}>
+              I'm working hard on our sorting algorithm
+              to better understand your niches and preferences.{'\n\n'}
+              Thank you for your interest - {'\n'}
+              I am taking note of this feature's popularity!
+            </Text>
+          </View>
+        </View>
+      )}
+
     </SafeAreaView>
 
   );
@@ -784,35 +1045,69 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
-    paddingVertical: 10,
-    backgroundColor: '#f5f5f5',
+    paddingVertical: 12,
+    backgroundColor: colors.primaryBg,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.divider,
   },
   backArrow: {
     fontSize: 24,
-    color: '#007bff',
+    color: colors.neonBlue,
+    marginRight: 10,
   },
-  bulkFollowButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 10,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  filterButton: {
+    backgroundColor: colors.neonPurple,
+    paddingVertical: 8,
     paddingHorizontal: 15,
-    borderRadius: 5,
+    borderRadius: borderRadius.md,
+    ...shadows.sm,
   },
-  bulkFollowText: {
-    color: '#fff',
-    fontSize: 16,
+  filterButtonText: {
+    color: colors.primaryText,
+    fontSize: typography.button.fontSize,
     fontWeight: 'bold',
+  },
+  changeFileButton: {
+    backgroundColor: colors.neonBlue,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: borderRadius.md,
+    ...shadows.sm,
+  },
+  changeFileText: {
+    color: colors.primaryText,
+    fontSize: typography.button.fontSize,
+    fontWeight: 'bold',
+  },
+  changeFileButtonSmall: {
+    backgroundColor: '#ddd', // Light gray background for less prominence
+    paddingVertical: 6, // Smaller padding
+    paddingHorizontal: 10, // Smaller width
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc', // Subtle border
+  },
+  changeFileTextSmall: {
+    color: '#555', // Subtle gray text
+    fontSize: 12, // Smaller font size
+    fontWeight: 'normal', // Normal font weight
   },
   // Profile grid styles
   profilesContainer: {
     flex: 1,
     paddingHorizontal: 10,
+    paddingBottom: 80, // Space for footer
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    paddingBottom: 60, // Add padding at the bottom for footer
   },
   profileWrapper: {
     flexBasis: isMobile ? '48%' : `${100 / columns}%`,
@@ -821,19 +1116,48 @@ const styles = StyleSheet.create({
   },
   // Footer styles
   footer: {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#f0f0f0',
+    padding: 15,
+    backgroundColor: colors.primaryBg,
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
+    borderTopColor: colors.divider,
+    zIndex: 1000,
   },
-  footerLeft: {},
+  footerLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  sortButton: {
+    backgroundColor: colors.neonBlue,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: borderRadius.md,
+    marginRight: 15,
+    ...shadows.sm,
+  },
+  sortButtonText: {
+    color: colors.primaryText,
+    fontSize: typography.button.fontSize,
+    fontWeight: 'bold',
+  },
+  authButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
   footerCenter: {},
   footerRight: {},
   footerText: {
-    fontWeight: 'bold',
+    color: colors.primaryText,
+    fontSize: typography.body.fontSize,
+    fontWeight: '500',
   },
   // Modal styles
   modalContainer: {
@@ -928,6 +1252,115 @@ const styles = StyleSheet.create({
   token: {
     fontWeight: 'bold',
     color: '#FF5722',
+  },
+  notificationPopup: {
+    position: 'absolute',
+    bottom: 40, // Position above the bottom edge
+    left: 20, // Margin from the left
+    right: 20, // Margin from the right
+    backgroundColor: '#FFF',
+    padding: 15, // Padding for internal spacing
+    borderRadius: 10, // Rounded corners
+    elevation: 5, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    minHeight: 110, // Ensure enough height for the content
+    minWidth: 120, // Ensure enough width for the
+    maxWidth: '90%', // Limit the width to 90% of the screen
+    flexDirection: 'row', // Align items horizontally
+    alignItems: 'center', // Vertically center the content
+    justifyContent: 'space-between', // Add spacing between text and button
+  },
+  notificationText: {
+    flex: 1, // Prevent text from shrinking
+    fontSize: 16, // Larger text size
+    color: '#333',
+    textAlign: 'left', // Left-align the text
+  },
+  greenPlusButton: {
+    backgroundColor: '#4CAF50', // Green background
+    borderRadius: 50, // Circular button
+    width: 30, // Button width
+    height: 20, // Button height
+    justifyContent: 'center', // Center content vertically
+    alignItems: 'center', // Center content horizontally
+    position: 'absolute', // Place it in a fixed position
+    right: 15, // Distance from the right edge of the footer
+    bottom: 10, // Distance from the bottom edge of the screen
+    shadowColor: '#000', // Shadow color for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset
+    shadowOpacity: 0.3, // Shadow opacity
+    shadowRadius: 5, // Shadow radius
+  },
+  
+  plusText: {
+    color: '#fff', // White text color
+    fontSize: 14, // Font size
+    fontWeight: 'bold', // Bold font
+  },
+  uploadButton: {
+    backgroundColor: '#4CAF50', // Green background
+    paddingVertical: 10, // Padding on top and bottom
+    paddingHorizontal: 20, // Padding on left and right
+    borderRadius: 5, // Rounded corners
+    alignItems: 'center', // Center align text
+    justifyContent: 'center', // Center align text
+    marginBottom: 15, // Add some spacing at the bottom
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 }, // Shadow position
+    shadowOpacity: 0.3, // Shadow transparency
+    shadowRadius: 3, // Shadow blur
+    elevation: 2, // Shadow for Android
+  },
+  uploadButtonText: {
+    color: '#FFFFFF', // White text color
+    fontSize: 16, // Font size
+    fontWeight: 'bold', // Bold text
+  },
+  profileImagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 10,
+  },
+  sortAlertOverlay: {
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 20,
+    borderRadius: borderRadius.lg,
+    zIndex: 2000,
+    maxWidth: '90%',
+    width: 400,
+  },
+  sortAlertContent: {
+    backgroundColor: colors.secondaryBg,
+    padding: 20,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    ...shadows.md,
+    width: '100%', // Ensure content takes full width
+  },
+  sortAlertTitle: {
+    color: colors.primaryText,
+    fontSize: typography.h3.fontSize,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    width: '100%', // Ensure title takes full width
+  },
+  sortAlertText: {
+    color: colors.secondaryText,
+    fontSize: typography.body.fontSize,
+    textAlign: 'center',
+    width: '100%', // Ensure text takes full width
+    flexWrap: 'wrap', // Enable text wrapping
+    display: 'flex', // Enable flexbox
+    marginTop: 5,
   },
 });
 
